@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Game",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/game.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Build Game",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb.exe",
+      "externalConsole": true,
+      "stopAtEntry": false
+    }
+  ]
+}
