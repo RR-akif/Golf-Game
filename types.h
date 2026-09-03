@@ -3,28 +3,34 @@
 
 #include "raylib.h"
 
+//Define
+#define MAX_WALLS 128
+#define MAX_ZONES 32
+#define MAX_HOLES 18
+#define MAX_OBSTACLES 32
+
 //SURFACE TYPES
 typedef enum
 {
-    surf_green,
-    surf_fairway,
-    surf_sand,
-    surf_ice,
-    surf_mud,
-    surf_water,
-    surf_boost,
-    surf_count,
+    SURF_GREEN,
+    SURF_FAIRWAY,
+    SURF_SAND,
+    SURF_ICE,
+    SURF_MUD,
+    SURF_WATER,
+    SURF_BOOST,
+    SURF_COUNT,
 }SurfaceType;
 
 
 //Ballstate-condition of the ball
 typedef enum
 {
-    ball_aim,
-    ball_charge,
-    ball_roll,
-    ball_sunk,
-    ball_oob, 
+    BALL_AIM,
+    BALL_CHARGE,
+    BALL_ROLL,
+    BALL_SUNK,
+    BALL_OOB, 
 }BallState;
 //OOB - Out of bounds
 
@@ -44,8 +50,8 @@ typedef struct
 //Small building block structures
 typedef struct
 {
-    Rectangle rect; // width,height,x and y coordinate of the rect's top left corner
-    float restitution; // How does the ball react after the collision "restitution"
+    Rectangle rect; // width,height,x and y coordinate of the rect's top left corner     typedef struct{float x,float y,float width,float height}Rectangle
+    float bounce; // How does the ball react after the collision "restitution"
 }Wall;
 
 
@@ -61,17 +67,20 @@ typedef struct
 //Entire golf info
 typedef struct
 {
-    Wall walls[32]; //max size can be 32
+    Wall walls[MAX_WALLS]; //max size of array
     int wallcount; // actual number of walls
     
-    Zone zones[16];
+    Zone zones[MAX_ZONES];
     int zonecount;
 
+    int number; //which number of hole this is
+    int par; //expected number of strokes to finish the hole
+    Vector2 teepos; //Where the ball  starts
     Vector2 cupPos; //position of the hole or target
     float cupradius; // When the ball is around the cup(target) , then how much radius will be considered as a successful shot
 
     Rectangle bounds; //Whole acceptable region of the rectangular field
-    Rectangle dropzone; //If the ball is in outb of bounds state, then move the ball to the final saest position
+    Rectangle dropzone; //If the ball is in out of bounds state, then move the ball to the final safest position
 }Hole;
 
 
