@@ -43,7 +43,7 @@ typedef struct
     float radius;
     BallState state;
     int strokes;
-    Vector2 lastsafepos; //When the ball is in out of bounds state, then it is kept to its final safe position
+    Vector2 lastSafePos; //When the ball is in out of bounds state, then it is kept to its final safe position
 }Ball;
 
 
@@ -80,7 +80,7 @@ typedef struct
     float cupradius; // When the ball is around the cup(target) , then how much radius will be considered as a successful shot
 
     Rectangle bounds; //Whole acceptable region of the rectangular field
-    Rectangle dropzone; //If the ball is in out of bounds state, then move the ball to the final safest position
+    Rectangle dropZone; //If the ball is in out of bounds state, then move the ball to the final safest position. This is a special rectangle where the ball is put only when tha ball goes out of bounds state
 }Hole;
 
 
