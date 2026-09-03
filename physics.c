@@ -4,7 +4,7 @@
 
 
 //Define
-#define MAX_BALL_SPEED 1100.00
+#define MAX_BALL_SPEED 1400.00
 #define CUP_CAPTURE_SPEED 250.00
 
 
