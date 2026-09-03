@@ -19,18 +19,18 @@ const float kfriction[SURF_COUNT]={
     [SURF_BOOST]=-600.0, //boosts the velocity
 };
 
-float Frictionof(SurfaceType s)
+float FrictionOf(SurfaceType s)
 {
     if(s<0 || s>=SURF_COUNT) return kfriction[SURF_GREEN]; // To avoid array out of bounds
     return kfriction[s];
 }
 
 //Determining the surface at which the ball is lying currently
-SurfaceType Surfaceat(const Hole *hole,Vector2 p) // hole values should be fixed, so we used const
+SurfaceType SurfaceAt(Hole *hole,Vector2 p)
 {
     SurfaceType found=SURF_GREEN; // firstly we assume the ball to be found in ground
 
-    for(int i=0;i<hole->zonecount;i++) //each zone is a rectangular area , eith a surface type and a wind vector
+    for(int i=0;i<hole->zonecount;i++) //each zone is a rectangular area , with a surface type and a wind vector
     {
         if(CheckCollisionPointRec(p,hole->zones[i].area)) // checks whether the point p falls anywhere inside (or on the edge of)that rectangle
         {
@@ -41,8 +41,8 @@ SurfaceType Surfaceat(const Hole *hole,Vector2 p) // hole values should be fixed
 }
 
 
-//Adding wind at some specific zones
-Vector2 Windat(const Hole *hole, Vector2 p)
+//Adding wind at  zones
+Vector2 WindAt(Hole *hole, Vector2 p)
 {
     Vector2 w={0.0 , 0.0};
     for(int i=0;i<hole->zonecount;i++)
@@ -70,7 +70,7 @@ void ApplyFriction(Ball *ball,float decel,float dt)
 }
 
 //Apply wind
-void Applywind(Ball *b,Vector2 wind,float dt)
+void ApplyWind(Ball *b,Vector2 wind,float dt)
 {
     b->vel= Vector2Add(b->vel , Vector2Scale(wind,dt)); //wind is an acceleration, so wind*dt makes it a velocity, then sumps up with the previous velocity
 }
