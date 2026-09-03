@@ -2,29 +2,35 @@
 #include "raymath.h"
 #include <math.h>
 
-//Frictions for distinct surfaces, declaring an array, as the values cannot be modified so we should use const 
-const float kfriction[surf_count]={
-    [surf_green]=420.0,
-    [surf_fairway]=300.f,
-    [surf_sand]=1400.00,
-    [surf_ice]=90.0,
-    [surf_mud]=2600.00,
-    [surf_water]=420.0,
-    [surf_boost]=-600.0, //boosts the velocity
+
+//Define
+#define MAX_BALL_SPEED 1100.00
+#define CUP_CAPTURE_SPEED 250.00
+
+
+//Frictions for distinct surfaces, declaring an array, as the values cannot be modified so we should use const   int a[6]={[2]=50,[7]=100}; a]2]=50,a[7]=100, other values are set to zero
+const float kfriction[SURF_COUNT]={
+    [SURF_GREEN]=420.0,
+    [SURF_FAIRWAY]=300.f,
+    [SURF_SAND]=1400.00,
+    [SURF_ICE]=90.0,
+    [SURF_MUD]=2600.00,
+    [SURF_WATER]=420.0,
+    [SURF_BOOST]=-600.0, //boosts the velocity
 };
 
 float Frictionof(SurfaceType s)
 {
-    if(s<0 || s>=surf_count) return kfriction[surf_green]; // To avoid array out of bounds
+    if(s<0 || s>=SURF_COUNT) return kfriction[SURF_GREEN]; // To avoid array out of bounds
     return kfriction[s];
 }
 
 //Determining the surface at which the ball is lying currently
 SurfaceType Surfaceat(const Hole *hole,Vector2 p) // hole values should be fixed, so we used const
 {
-    SurfaceType found=surf_green;
+    SurfaceType found=SURF_GREEN; // firstly we assume the ball to be found in ground
 
-    for(int i=0;i<hole->zonecount;i++)
+    for(int i=0;i<hole->zonecount;i++) //each zone is a rectangular area , eith a surface type and a wind vector
     {
         if(CheckCollisionPointRec(p,hole->zones[i].area)) // checks whether the point p falls anywhere inside (or on the edge of)that rectangle
         {
@@ -58,7 +64,7 @@ void ApplyFriction(Ball *ball,float decel,float dt)
 
     float newspeed=speed - decel*dt;
     if(newspeed<=0.00) newspeed=0.0; //when newspeed becomes negative and if we dont convert it to zero, then both x and y component of ball->vel will be negative. Then after calculating length, the speed will again be positive.
-    if(newspeed>max_ball_speed) newspeed=max_ball_speed; //When ball->vel is boosted due to a certain zone.
+    if(newspeed>MAX_BALL_SPEED) newspeed=MAX_BALL_SPEED; //When ball->vel is boosted due to a certain zone.
 
     ball->vel=Vector2Scale(ball->vel,newspeed/speed); // The ratio is always less than 1, so the valocity will be reduced gradually.
 }
@@ -69,42 +75,69 @@ void Applywind(Ball *b,Vector2 wind,float dt)
     b->vel= Vector2Add(b->vel , Vector2Scale(wind,dt)); //wind is an acceleration, so wind*dt makes it a velocity, then sumps up with the previous velocity
 }
 
-
-//check collision with walls and bouncing off
-void CheckWallCollision(Ball *b,Hole *h)
+//Check collision with wall
+void CheckWallCollision(Ball *b, Hole *h)
 {
-    for(int i=0;i<h->wallcount;i++)
+    for (int i = 0; i < h->wallcount; i++)
     {
-        if(b->pos.x - b->radius < h->walls[i].rect.x) // left edge of the wall
-        {
-            b->pos.x = b->radius + h->walls[i].rect.x;
-            b->vel.x= -b->vel.x * h->walls[i].restitution;
-        }
+        Rectangle r=h->walls[i].rect;
 
-        if(b->pos.x + b->radius > h->walls[i].rect.x + h->walls[i].rect.width) // Right edge of the wall
-        {
-            b->pos.x = -b->radius + h->walls[i].rect.x + h->walls[i].rect.width;
-            b->vel.x= -b->vel.x * h->walls[i].restitution;
-        }
+        float closestX=fmaxf(r.x,fminf(b->pos.x,r.x + r.width));  //Find the X coordinate of the point on the rectangle that is closest to the ball's center.It forces closestX to stay between r.x and r.x + r.width . If ball is horizontally inside the rectangle then it returns the x coordinate of the center of the ball, if the ball is on the left of the left wall it returns the r.x(left edge) and if the ball is on the right side of the right wall, then it returns the x coordiante of the right edge(r.x + r.x + r.width)
+        float closestY=fmaxf(r.y, fminf(b->pos.y, r.y + r.height)); //similarly get the closest y, together they represent the closest coordinate on the wall from the ball's center.
 
-        if(b->pos.y - b->radius < h->walls[i].rect.y) // top edge of the wall
-        {
-            b->pos.y= b->radius + h->walls[i].rect.y;
-            b->vel.y= -b->vel.y * h->walls[i].restitution;
-        }
+        float dx=b->pos.x-closestX;
+        float dy=b->pos.y-closestY; //points to a vector from rectangle to ball (vector acts always along final vector - initial vector)
 
-        if(b->pos.y + b->radius < h->walls[i].rect.y + h->walls[i].rect.height) // bottom edge of the wall
+        float distanceSquared=dx*dx + dy*dy;
+        if (distanceSquared<=b->radius*b->radius) // whether the distance is less than the radius of the ball
         {
-            b->pos.y = -b->radius + h->walls[i].rect.y + h->walls[i].rect.height;
-            b->vel.y= -b->vel.y * h->walls[i].restitution;
+            float distance = sqrtf(distanceSquared);
+
+            Vector2 normal; //The direction perpendicular to the surface the the ball should be pushed away from
+            if (distance > 0.0)
+            {
+                normal = (Vector2){ 
+                    dx / distance,
+                    dy / distance    // making "normal" a unit vector "unit normal"= it has only direction and length 1, so that at the time of the ball being bounced off, we can just alter the velocity direction along the "unit normal " vector.
+                };
+            }
+            else              // when distance is zero (ball is inside the rectangle) then dx/distance this would lead to 0/0.
+            {
+                float left=fabsf(b->pos.x - r.x);
+                float right=fabsf(b->pos.x - (r.x + r.width));
+                float top=fabsf(b->pos.y - r.y);
+                float bottom=fabsf(b->pos.y - (r.y + r.height)); //determining distances form each edge of the wall
+
+                float minDist=fminf(fminf(left, right),
+                                      fminf(top, bottom)); // Finding the distance of the ball from the nearest edge among four edges.
+
+                if (minDist == left)
+                    normal=(Vector2){-1.0, 0.0};  // As distance from the left edge is shortest , so we can assume that the ball entered the wall through the left side, and so it should be bounced off from the left edge.
+                else if (minDist == right)
+                    normal=(Vector2){1.0, 0.0};
+                else if (minDist == top)
+                    normal=(Vector2){0.0, -1.0};
+                else
+                    normal=(Vector2){0.0, 1.0};  // seting unity vector for normal
+            }
+
+            b->pos.x=closestX+normal.x*b->radius; 
+            b->pos.y=closestY+normal.y*b->radius; //push the ball along the direction of the normal , the center of balls coordinate should be minimum one radius away from the closest edge. Because for that case, the closest point of the ball is just at the touching state with the edge. 
+
+            //Handle bouncing off with necessary velocity
+
+            float velocityAlongNormal = b->vel.x*normal.x+b->vel.y*normal.y; //just we took the dot product.We know normal always acts at the outer direction of the wall. So,If velocity alongnormal is negative then it means ball is moving towards the opposite direction of the normal and moving into the wall. Positive means same direction and moving away ffrom the wall. If the ball is moving along the parallel line of the wall, the this will be zero.
+                                                                //If this is posotive, then it already means the ball is moving away from the wall, so it is already bounced off. so we dont need to change the velocity.
+            if (velocityAlongNormal < 0.0) //We have to handle the bouncing when the that velocityalongnormal is negative. We have to push it away from the wall.
+            {
+                //******equation , v_new= v_old - (1+e)*(dot of v_old and normal)*normal_component*****
+
+                b->vel.x -=(1.0+h->walls[i].bounce)* velocityAlongNormal * normal.x;  //for perfect elastic collision, when b->vel.x=10, and velocityalongnormal is -10, then simply this equation converts the velocity to -10 , it bounces off to the opposite direction with same velocity. That is exactly what we want. 
+                b->vel.y -=(1.0f + h->walls[i].bounce)* velocityAlongNormal * normal.y;
+            }
         }
     }
-    
-    float magnitude= sqrtf(b->vel.x * b->vel.x + b->vel.y * b->vel.y);
-    b->vel=(Vector2){b->vel.x,b->vel.y}; // In order to assign a struct we should do typecasting before
-    b->vel = Vector2Scale(Vector2Normalize(b->vel), magnitude); // multiplying the magnitude(scalar) by the unit vector of b->vel
 }
-
 
 //Check collision with circular hole
 int CheckCupCollision(Ball *b,Hole *h)
@@ -117,7 +150,7 @@ int CheckCupCollision(Ball *b,Hole *h)
     if(capture_dist < 0.00)
     capture_dist= 0.00;
 
-    if(Vector2Length(b->vel)<=hole_capture_speed && distance<=capture_dist)
+    if(Vector2Length(b->vel)<=CUP_CAPTURE_SPEED && distance<=capture_dist)
     return 1;
     
     return 0;
