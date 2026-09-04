@@ -35,6 +35,16 @@ typedef enum
 }BallState;
 //OOB - Out of bounds
 
+//Defining current state of the game
+typedef enum
+{
+    GS_MENU, // shows menu or options
+    GS_PLAYING, //player is at playing mode
+    GS_HOLE_DONE, //shows hole completed informations
+    GS_SCOREBOARD, //shows scores or results
+    GS_PAUSED // stops gameplay while showing pause menu
+}GameStateId;
+
 
 //Ball's data
 typedef struct 
@@ -69,20 +79,31 @@ typedef struct
 typedef struct
 {
     Wall walls[MAX_WALLS]; //max size of array
-    int wallcount; // actual number of walls
+    int wallCount; // actual number of walls
     
     Zone zones[MAX_ZONES];
-    int zonecount;
+    int zoneCount;
 
     int number; //which number of hole this is
     int par; //expected number of strokes to finish the hole
     Vector2 teepos; //Where the ball  starts
     Vector2 cupPos; //position of the hole or target
-    float cupradius; // When the ball is around the cup(target) , then how much radius will be considered as a successful shot
+    float cupRadius; // When the ball is around the cup(target) , then how much radius will be considered as a successful shot
 
-    Rectangle bounds; //Whole acceptable region of the rectangular field
+    Rectangle bounds; //Whole acceptable region of the rectangular field(boundarries), course is named as bounds
     Rectangle dropZone; //If the ball is in out of bounds state, then move the ball to the final safest position. This is a special rectangle where the ball is put only when tha ball goes out of bounds state
 }Hole;
+
+
+typedef struct 
+{
+    GameStateId state;
+    Camera2D camera;              //typedef struct{Vector2 target;Vector2 offset;float rotation;float zoom}Camera2D;
+    Ball ball;
+    Hole hole;
+    int holeIndex;  //there can be multuple holes per level, so it defines the indices of each hole
+    int scores[MAX_HOLES];  //we will calculate scores for individual holes, such as scores[0]=4 that would mean total score for hole 1 is 4.Hence, to get final score we have to accumulate scores for all holes.
+}Game;
 
 
 #endif
