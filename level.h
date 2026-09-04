@@ -32,7 +32,7 @@ typedef struct{
 }Edtior;
 
 
-void BuildHole1 (Hole *h);
+// removed the build hole function... as i will draw map from text files..... so only about that is declared here...    
 
 
 bool LoadHoleFromFile(Hole *h,const char *path);

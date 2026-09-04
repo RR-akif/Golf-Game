@@ -19,7 +19,8 @@ typedef enum
     SURF_MUD,
     SURF_WATER,
     SURF_BOOST,
-    SURF_COUNT,
+    SURF_COUNT, /* it will automatically update the suraface numbers that i have created.....(rafin) 
+                    so next time we can just add a new surface, without changing the count*/
 }SurfaceType;
 
 
