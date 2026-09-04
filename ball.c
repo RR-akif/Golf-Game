@@ -2,7 +2,7 @@
 #include "physics.h"
 #include "raymath.h"
 #include <math.h>
-#include <raylib.h>
+
 
 
 //Define

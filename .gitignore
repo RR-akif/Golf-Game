@@ -1,2 +1,5 @@
 *.exe
-.cph/
+.cph/build/
+*.o
+*.d
+golf

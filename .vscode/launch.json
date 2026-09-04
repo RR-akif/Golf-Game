@@ -5,13 +5,12 @@
       "name": "Run Game",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/game.exe",
+      "program": "${workspaceFolder}/golf",
       "args": [],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "Build Game",
-      "MIMode": "gdb",
-      "miDebuggerPath": "gdb.exe",
-      "externalConsole": true,
+      "MIMode": "lldb",
+      "externalConsole": false,
       "stopAtEntry": false
     }
   ]

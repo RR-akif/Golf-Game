@@ -4,18 +4,8 @@
     {
       "label": "Build Game",
       "type": "shell",
-      "command": "gcc",
-      "args": [
-        "main.c",
-        "-I${workspaceFolder}/raylib/include",
-        "-L${workspaceFolder}/raylib/lib",
-        "-lraylib",
-        "-lopengl32",
-        "-lgdi32",
-        "-lwinmm",
-        "-o",
-        "${workspaceFolder}/game.exe"
-      ],
+      "command": "make",
+      "args": [],
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -24,6 +14,16 @@
         "isDefault": true
       },
       "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Clean",
+      "type": "shell",
+      "command": "make",
+      "args": ["clean"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
     }
   ]
 }

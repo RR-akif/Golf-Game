@@ -1,7 +1,7 @@
 #include "physics.h"
 #include "raymath.h"
 #include <math.h>
-#include <raylib.h>
+
 
 
 //Define
@@ -151,8 +151,7 @@ int CheckCupCollision(Ball *b,Hole *h)
     if(capture_dist < 0.00)
     capture_dist= 0.00;
 
-    if(Vector2Length(b->vel)<=CUP_CAPTURE_SPEED && distance<=capture_dist)
-    return 1;
+    if(Vector2Length(b->vel)<=CUP_CAPTURE_SPEED && distance<=capture_dist) return 1;
     
     return 0;
 }
