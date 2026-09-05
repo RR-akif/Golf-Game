@@ -31,7 +31,7 @@ SurfaceType SurfaceAt(Hole *hole,Vector2 p)
 {
     SurfaceType found=SURF_GREEN; // firstly we assume the ball to be found in ground
 
-    for(int i=0;i<hole->zoneCount;i++) //each zone is a rectangular area , with a surface type and a wind vector
+    for(int i=0;i<hole->zone_count;i++) //each zone is a rectangular area , with a surface type and a wind vector
     {
         if(CheckCollisionPointRec(p,hole->zones[i].area)) // checks whether the point p falls anywhere inside (or on the edge of)that rectangle
         {
@@ -46,7 +46,7 @@ SurfaceType SurfaceAt(Hole *hole,Vector2 p)
 Vector2 WindAt(Hole *hole, Vector2 p)
 {
     Vector2 w={0.0 , 0.0};
-    for(int i=0;i<hole->zoneCount;i++)
+    for(int i=0;i<hole->zone_count;i++)
     {
         if(CheckCollisionPointRec(p,hole->zones[i].area))
         {
@@ -79,7 +79,7 @@ void ApplyWind(Ball *b,Vector2 wind,float dt)
 //Check collision with wall
 void CheckWallCollision(Ball *b, Hole *h)
 {
-    for (int i = 0; i < h->wallCount; i++)
+    for (int i = 0; i < h->wall_count; i++)
     {
         Rectangle r=h->walls[i].rect;
 
@@ -143,10 +143,10 @@ void CheckWallCollision(Ball *b, Hole *h)
 //Check collision with circular hole
 int CheckCupCollision(Ball *b,Hole *h)
 {
-    float dx= b->pos.x - h->cupPos.x;
-    float dy= b->pos.y - h->cupPos.y;
+    float dx= b->pos.x - h->cup_pos.x;
+    float dy= b->pos.y - h->cup_pos.y;
     float distance = sqrtf(dx*dx + dy*dy);
-    float capture_dist= h->cupRadius - b->radius;
+    float capture_dist= h->cup_radius - b->radius;
 
     if(capture_dist < 0.00)
     capture_dist= 0.00;

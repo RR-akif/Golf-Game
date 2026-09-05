@@ -12,8 +12,8 @@
 
 // addzone function o lekha baki
 void AddZone(Hole *h, SurfaceType t, float x, float y, float w, float ht, Vector2 wind){
-    if(h->zonecount >= MAX_ZONES) return;
-    h->zones[h->zonecount++] = (Zone){(Rectangle){x,y,w,ht},t,wind};
+    if(h->zone_count >= MAX_ZONES) return;
+    h->zones[h->zone_count++] = (Zone){(Rectangle){x,y,w,ht},t,wind};
 }
 
 // for the course loading && file handling for creating the map or course
@@ -22,18 +22,18 @@ bool Validate_hole(Hole *h,const char *path){
     bool ok = true;
 
     if(h->par < 1 || h->par > 9) h->par = 3;
-    if(h->cupradius < 4.0f) h->cupradius = 14.0f;
+    if(h->cup_radius < 4.0f) h->cup_radius = 14.0f;
     if(h->bounds.width < 100.0f || h->bounds.height < 100.0f) ok = false;
-    if(!CheckCollisionPointRec(h->teepos, h->bounds)) ok = false;
-    if(!CheckCollisionPointRec(h->cupPos, h->bounds)) ok = false;
-    if(h-> wallcount == 0) ok = false; // im not sure about this one, need to check !!!!!!!
+    if(!CheckCollisionPointRec(h->tee_pos, h->bounds)) ok = false;
+    if(!CheckCollisionPointRec(h->cup_pos, h->bounds)) ok = false;
+    if(h-> wall_count == 0) ok = false; // im not sure about this one, need to check !!!!!!!
     return ok;
 }
 
 // add_wall function lekha baki ekhono
 void AddWall(Hole *h, float x, float y, float w, float ht, float bounce){{
-    if(h->wallcount >= MAX_WALLS) return;
-    h->walls[h->wallcount++] = (Wall){(Rectangle){x,y,w,ht},bounce};
+    if(h->wall_count >= MAX_WALLS) return;
+    h->walls[h->wall_count++] = (Wall){(Rectangle){x,y,w,ht},bounce};
 }
 
 
@@ -61,13 +61,13 @@ void Parseline(Hole *h,char *line, int line_no, const char *path){
         sscanf(line, "%*s %f %f %f %f",&h->bounds.x,&h->bounds.y,&h->bounds.width, &h->bounds.height);
     }
     else if(strcmp(k, "tee") == 0){
-        sscanf(line, "%*s %f %f",&h->teepos.x, &h->teepos.y);
+        sscanf(line, "%*s %f %f",&h->tee_pos.x, &h->tee_pos.y);
     }
     else if(strcmp(k, "cup") == 0){
-        sscanf(line, "%*s %f %f %f",&h->cupPos.x, &h->cupPos.y, &h->cupradius);
+        sscanf(line, "%*s %f %f %f",&h->cup_pos.x, &h->cup_pos.y, &h->cup_radius);
     }
     else if(strcmp(k, "drop") == 0){
-        sscanf(line, "%*s %f %f %f %f", &h->dropZone.x, &h->dropZone.y, &h->dropZone.width, &h->dropZone.height);
+        sscanf(line, "%*s %f %f %f %f", &h->drop_zone.x, &h->drop_zone.y, &h->drop_zone.width, &h->drop_zone.height);
     }
     else if(strcmp(k, "wall") == 0){
         float x, y, w, ht, b = 0.72f;
@@ -95,7 +95,7 @@ bool LoadHoleFromFile(Hole *h, const char *path){
 
     //setting the defualt;
     h->par = 3;
-    h->cupradius = 14.0f;
+    h->cup_radius = 14.0f;
     h->bounds = (Rectangle){0,0,1600,900};
 
     int line_no = 0;
@@ -145,7 +145,7 @@ bool course_advance(Course *c){
 }
 
 Hole *course_current(Course *c){
-    if(c->current < 0 || c.current >= c->hole_count) return &c->holes[0];
+    if(c->current < 0 || (c->current >= c->hole_count)) return &c->holes[0];
     return &c->holes[c->current];
 }
 
@@ -194,7 +194,7 @@ int course_to_par(const Course *c, const int *scores){
 
 void EditorInit(Edtior *e){
     e->tool = TOOL_WALL;
-    e->zonetype = SURF_SAND;
+    e->zone_type = SURF_SAND;
     e->dragging = false;
     e->grid_size = 10;
     e->selected = -1;
@@ -213,15 +213,15 @@ Rectangle RectFromCorners(Vector2 a, Vector2 b){
 
 // its simply like removing a element from middle of an array and shifting the position
 void RemoveWall(Hole *h, int index){
-    if(index < 0 || index >= h->wallcount) return;
-    for(int i = index; i < h->wallcount - 1; i++){
+    if(index < 0 || index >= h->wall_count) return;
+    for(int i = index; i < h->wall_count - 1; i++){
         h->walls[i] = h->walls[i + 1];
     }
-    h->wallcount--;
+    h->wall_count--;
 }
 
 int WallAtPoint(const Hole *h, Vector2 p){
-    for(int i = h->wallcount - 1; i >= 0; i--){
+    for(int i = h->wall_count - 1; i >= 0; i--){
         if(CheckCollisionPointRec(p, h->walls[i].rect)) return i;
     }
     return -1;
@@ -242,7 +242,7 @@ void PopUndo(Hole *h){
     UndoBuffer = temporary;
 }
 
-void Editor_Update(Edtior *e, Hole *h, const InputState *in){
+void editor_update(Edtior *e, Hole *h, const InputState *in){
     Vector2 p = Snap2Grid(in->pointer_world, e->grid_size);
     e->selected = WallAtPoint(h, in->pointer_world);
 
@@ -254,10 +254,10 @@ void Editor_Update(Edtior *e, Hole *h, const InputState *in){
     if(IsKeyPressed(KEY_FOUR)) e->tool = TOOL_CUP;
     if(IsKeyPressed((KEY_FIVE))) e->tool = TOOL_DROP;
 
-    // cycle of zonetype baby
+    // cycle of zone_type baby
 
     if(IsKeyPressed(KEY_TAB)){
-        e->zonetype = (SurfaceType)((e->zonetype + 1) % SURF_COUNT);
+        e->zone_type = (SurfaceType)((e->zone_type + 1) % SURF_COUNT);
     }
 
     //// another cycle but with if else loop _ for grid sizing
@@ -281,14 +281,14 @@ void Editor_Update(Edtior *e, Hole *h, const InputState *in){
 
         switch(e->tool){
             case TOOL_TEE:
-                h->teepos = p; 
+                h->tee_pos = p; 
                 break;
             case TOOL_CUP:
-                h->cupPos = p;
+                h->cup_pos = p;
                 break;
             case TOOL_DROP:
                 if(r.width >= 4.0f && r.height >= 4.0f){
-                    h->dropZone = r;
+                    h->drop_zone = r;
                 }
                 break;
             case TOOL_WALL : 
@@ -297,7 +297,7 @@ void Editor_Update(Edtior *e, Hole *h, const InputState *in){
                 break;
             case TOOL_ZONE:
                 if(r.width >= 4.0f && r.height >= 4.0f){
-                    AddZone(h,e->zonetype, r.x, r.y, r.width, r.height,Vector2Zero());
+                    AddZone(h,e->zone_type, r.x, r.y, r.width, r.height,Vector2Zero());
                 }
                 break;
                 

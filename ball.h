@@ -4,7 +4,7 @@
 #include "types.h"
 
 //All declared functions
-void BallInit(Ball *ball,Vector2 teepos); //Initializing the position and velocity of the ball
+void BallInit(Ball *ball,Vector2 tee_pos); //Initializing the position and velocity of the ball
 float BallSpeed(Ball *ball); // determine the magnitude of its velocity
 bool BallAtRest(Ball *ball); //Checking whether the ball is at rest or not
 void BallLaunch(Ball *ball,Vector2 dir,float power); //After effect of using the powermeter

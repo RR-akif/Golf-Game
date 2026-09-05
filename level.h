@@ -24,7 +24,7 @@ typedef enum{
 
 typedef struct{
     Edit_Tool tool;
-    SurfaceType zonetype;
+    SurfaceType zone_type;
     bool dragging;
     Vector2 drag_start;
     int grid_size;

@@ -33,6 +33,8 @@ typedef struct{
 
 void putter_init(Putter *p);
 void putter_update(Putter *p,const InputState *in,Ball *ball,float dt);
+bool PutterIsCharging(const Putter *p);
+float PutterPower(const Putter *p);
 void putter_draw(const Putter *p,const Ball *ball);
 
 #endif

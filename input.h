@@ -19,7 +19,7 @@ typedef struct {
     bool cancel;
 
     bool confirm;
-    bool camZoomDelta;
+    bool cam_zoom_delta;
 
 } InputState;
 
@@ -27,13 +27,13 @@ typedef struct{
     float aim_angle;
     float right_held_time;
     float right_drag_distance;
-    bool rightwasdown;
+    bool right_was_down;
 
 } InputSystem;
 
 void InputInit(InputSystem *sys);
 
-InputState InputPoll(InputSystem *sys,Vector2 ballPos,Camera2D cam, float dt);
+InputState InputPoll(InputSystem *sys,Vector2 ball_pos,Camera2D cam, float dt);
 
 Vector2 DirFromAngle(float angle);
 

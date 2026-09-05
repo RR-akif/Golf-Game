@@ -1,0 +1,18 @@
+# hole 1 -- straight, learn the power bar
+hole 1
+par 2
+bounds 0 0 1600 900
+
+tee 220 450
+cup 1320 450 16
+drop 120 700 220 130
+
+# rails around the course
+wall 0 0 1600 24 0.72
+wall 0 876 1600 24 0.72
+wall 0 0 24 900 0.72
+wall 1576 0 24 900 0.72
+
+# fairway strip down the middle
+zone 1 24 340 1552 220 0 0
+end

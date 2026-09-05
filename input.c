@@ -21,16 +21,16 @@ void InputInit(InputSystem *sys){
     sys ->aim_angle = 0.0f;
     sys -> right_held_time = 0.0f;
     sys -> right_drag_distance = 0.0f;
-    sys -> rightwasdown = false;
+    sys -> right_was_down = false;
 }
 
-InputState InputPoll(InputSystem *sys, Vector2 ballPos, Camera2D cam, float dt){
+InputState InputPoll(InputSystem *sys, Vector2 ball_pos, Camera2D cam, float dt){
     InputState in = {0};
     
     in.pointer_world = GetScreenToWorld2D(GetMousePosition(), cam);
 
     // for aiming the ball.
-    Vector2 to_cursor = Vector2Subtract(in.pointer_world,ballPos);
+    Vector2 to_cursor = Vector2Subtract(in.pointer_world,ball_pos);
     // check if aim is valid even or not
     if(Vector2LengthSqr(to_cursor) > aim_distance * aim_distance){
         sys->aim_angle = atan2f(to_cursor.y,to_cursor.x);
@@ -51,18 +51,18 @@ InputState InputPoll(InputSystem *sys, Vector2 ballPos, Camera2D cam, float dt){
     if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
         sys->right_held_time = 0.0f;
         sys->right_drag_distance = 0.0f;
-        sys->rightwasdown = true;
+        sys->right_was_down = true;
     }
-    if(sys->rightwasdown && IsMouseButtonDown(MOUSE_BUTTON_RIGHT)){
+    if(sys->right_was_down && IsMouseButtonDown(MOUSE_BUTTON_RIGHT)){
         sys->right_held_time += dt;
         sys->right_drag_distance = Vector2Length(GetMouseDelta());
     }
 
-    if(sys->rightwasdown && IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)){
+    if(sys->right_was_down && IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)){
         in.cancel = (sys->right_held_time < right_click_time && sys->right_drag_distance < right_click_distance);
-        sys->rightwasdown = false;
+        sys->right_was_down = false;
     }
-    in.camZoomDelta = GetMouseWheelMove() * zoom_per_notch;
+    in.cam_zoom_delta = GetMouseWheelMove() * zoom_per_notch;
 
 
     return in;

@@ -54,7 +54,7 @@ typedef struct
     float radius;
     BallState state;
     int strokes;
-    Vector2 lastSafePos; //When the ball is in out of bounds state, then it is kept to its final safe position
+    Vector2 last_safe_pos; //When the ball is in out of bounds state, then it is kept to its final safe position
 }Ball;
 
 
@@ -79,19 +79,19 @@ typedef struct
 typedef struct
 {
     Wall walls[MAX_WALLS]; //max size of array
-    int wallCount; // actual number of walls
+    int wall_count; // actual number of walls
     
     Zone zones[MAX_ZONES];
-    int zoneCount;
+    int zone_count;
 
     int number; //which number of hole this is
     int par; //expected number of strokes to finish the hole
-    Vector2 teepos; //Where the ball  starts
-    Vector2 cupPos; //position of the hole or target
-    float cupRadius; // When the ball is around the cup(target) , then how much radius will be considered as a successful shot
+    Vector2 tee_pos; //Where the ball  starts
+    Vector2 cup_pos; //position of the hole or target
+    float cup_radius; // When the ball is around the cup(target) , then how much radius will be considered as a successful shot
 
     Rectangle bounds; //Whole acceptable region of the rectangular field(boundarries), course is named as bounds
-    Rectangle dropZone; //If the ball is in out of bounds state, then move the ball to the final safest position. This is a special rectangle where the ball is put only when tha ball goes out of bounds state
+    Rectangle drop_zone; //If the ball is in out of bounds state, then move the ball to the final safest position. This is a special rectangle where the ball is put only when tha ball goes out of bounds state
 }Hole;
 
 
@@ -101,7 +101,7 @@ typedef struct
     Camera2D camera;              //typedef struct{Vector2 target;Vector2 offset;float rotation;float zoom}Camera2D;
     Ball ball;
     Hole hole;
-    int holeIndex;  //there can be multuple holes per level, so it defines the indices of each hole
+    int hole_index;  //there can be multuple holes per level, so it defines the indices of each hole
     int scores[MAX_HOLES];  //we will calculate scores for individual holes, such as scores[0]=4 that would mean total score for hole 1 is 4.Hence, to get final score we have to accumulate scores for all holes.
 }Game;
 

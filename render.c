@@ -32,7 +32,7 @@ void RenderInit(RenderState *r,Vector2 ballpos)
     r->cam.target=ballpos; // At which point of the world map the camera is looking at, world map can be larger than our screen, so we have to think for both.
     r->cam.rotation=0.00;
     r->cam.zoom=1.00;
-    r->holeTime=0.00; // initially the value is zero. bcz no time has been passed since the hole started.
+    r->hole_time=0.00; // initially the value is zero. bcz no time has been passed since the hole started.
 }
 
 
@@ -62,12 +62,12 @@ void ClampCamera(Camera2D *cam,Rectangle bounds) // bounds means the boundaries 
 
 void RenderUpdateCamera(RenderState *r,const Ball *b,const Hole *h,const Putter *p,float dt)
 {
-    r->holeTime+=dt; // the existing time of a hole is being increased per frame
+    r->hole_time+=dt; // the existing time of a hole is being increased per frame
 
     Vector2 desired; // where we want to the camera to move
     if(b->state==BALL_AIM || b->state==BALL_CHARGE)
     {
-        Vector2 lead={cosf(p->aimAngle)*90.0,sinf(p->aimAngle)*90.0}; //cos,sin values are between -1 to 1. But we want a direction where the camera will move, and threoughout the game we are trying to keep the camera ahead of the ball without directly jumping it on the ball.
+        Vector2 lead={cosf(p->aim_angle)*90.0,sinf(p->aim_angle)*90.0}; //cos,sin values are between -1 to 1. But we want a direction where the camera will move, and threoughout the game we are trying to keep the camera ahead of the ball without directly jumping it on the ball.
         desired=Vector2Add(b->pos,lead); //if the angle is 0 then value is(1*90,0), so the camera will 90 pixels away along the horizontal direction from the balls initial x position, and y will be similar.
     }
     else
@@ -118,30 +118,30 @@ void DrawCourse(const Hole *h)
     }
 
     //Draw surface zone
-    for(int i=0;i<h->zoneCount;i++)
+    for(int i=0;i<h->zone_count;i++)
     {
         DrawRectangleRec(h->zones[i].area , SurfaceColor(h->zones[i].type));
     }
 
     //Drawing rectangular rounded dropzone {Rectangle,roundness,segments(how smoothly the corners are drawn),color}
-    if(h->dropZone.width>0.00)
+    if(h->drop_zone.width>0.00)
     {
         for(int i=0;i<3;i++) // dividing the dropzone in three sections
         {
             DrawRectangleRounded(
-                (Rectangle){ h->dropZone.x + i * (h->dropZone.width / 3.0f) + 8, // each section's width will be one third of the total width, and +8 is done to seperate the first section by "8 pixels" from the boundary of the dropzone
-                             h->dropZone.y + 10, //keeping the section 10 unit below from its upper boundary
-                             h->dropZone.width / 3.0f - 20, //here "-20" acts like a seperator between two consecutive sections of the dropzone
-                             h->dropZone.height - 20 }, 
+                (Rectangle){ h->drop_zone.x + i * (h->drop_zone.width / 3.0f) + 8, // each section's width will be one third of the total width, and +8 is done to seperate the first section by "8 pixels" from the boundary of the dropzone
+                             h->drop_zone.y + 10, //keeping the section 10 unit below from its upper boundary
+                             h->drop_zone.width / 3.0f - 20, //here "-20" acts like a seperator between two consecutive sections of the dropzone
+                             h->drop_zone.height - 20 }, 
                 0.3f, 6, (Color){ 200, 200, 200, 235 });
         }
-        DrawText("DROP", (int)(h->dropZone.x + 30),(int)(h->dropZone.y + h->dropZone.height + 6), 20, BLACK); //We want to draw the txt below the dropzone section         
+        DrawText("DROP", (int)(h->drop_zone.x + 30),(int)(h->drop_zone.y + h->drop_zone.height + 6), 20, BLACK); //We want to draw the txt below the dropzone section         
     }
 
     //Drawing cup
-    DrawCircleV(h->cupPos, h->cupRadius + 2.0f,ColorBrightness(GRASS_BASE, -0.30f)); //drawing outer rim around the main hole with a radius of 2 pixel larger
-    DrawCircleV(h->cupPos, h->cupRadius, (Color){ 18, 18, 20, 255 }); //main hole
-    DrawCircleV((Vector2){ h->cupPos.x, h->cupPos.y + 2.0f },h->cupRadius * 0.72f, (Color){ 34, 34, 38, 255 }); //This is comparatively a smaller circle drawn slightly below the main hole(h->cupPos+2) in order create a depth effect of the circle. Hence the hole appears to go downward
+    DrawCircleV(h->cup_pos, h->cup_radius + 2.0f,ColorBrightness(GRASS_BASE, -0.30f)); //drawing outer rim around the main hole with a radius of 2 pixel larger
+    DrawCircleV(h->cup_pos, h->cup_radius, (Color){ 18, 18, 20, 255 }); //main hole
+    DrawCircleV((Vector2){ h->cup_pos.x, h->cup_pos.y + 2.0f },h->cup_radius * 0.72f, (Color){ 34, 34, 38, 255 }); //This is comparatively a smaller circle drawn slightly below the main hole(h->cup_pos+2) in order create a depth effect of the circle. Hence the hole appears to go downward
     //Three circles = outer rim + main hole + holes depth effect     
 }
 
@@ -162,7 +162,7 @@ void DrawRail(Rectangle r)
 
 void DrawRails(const Hole *h)
 {
-    for (int i=0;i<h->wallCount;i++) DrawRail(h->walls[i].rect);
+    for (int i=0;i<h->wall_count;i++) DrawRail(h->walls[i].rect);
 }
 
 //Drawing the ball
@@ -204,12 +204,12 @@ static void DrawPowerBar(float x,float y,float w,float h,float power) // Here po
 }
 
 
-void DrawHUD(const Hole *h, const Ball *b, const Putter *p,int holeIndex, int holeCount, int total)
+void DrawHUD(const Hole *h, const Ball *b, const Putter *p,int hole_index, int hole_count, int total)
 {
     int sw=GetScreenWidth(),sh=GetScreenHeight();
 
     DrawRectangleRounded((Rectangle){12,12,210,78},0.2,8,Fade(BLACK, 0.45));//Draw rectangle at the top of the bar to show game huds
-    DrawText(TextFormat("HOLE %d / %d",h->number,holeCount),26,20,20,RAYWHITE); //TextFormat-Formatted string
+    DrawText(TextFormat("HOLE %d / %d",h->number,hole_count),26,20,20,RAYWHITE); //TextFormat-Formatted string
     DrawText(TextFormat("PAR %d", h->par), 26, 44, 16, Fade(RAYWHITE, 0.75));
     DrawText(TextFormat("TOTAL %d", total + b->strokes), 26, 66, 16,Fade(RAYWHITE, 0.6)); //total means counted strokes upto previous holes, and b->strokes means strokes for the current hole
     //This portion will be shown inside a rectangle, its to show the player which hole they are playing,par of that hole and their total strokes.

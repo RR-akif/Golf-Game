@@ -12,13 +12,13 @@
 #define MAX_SUBSTEPS 8   // maximum dynamic number of smaller micro-steps the code decides to split thhe current frame into
 
 
-void BallInit(Ball *ball,Vector2 teepos)
+void BallInit(Ball *ball,Vector2 tee_pos)
 {
-    ball->pos=teepos;
+    ball->pos=tee_pos;
     ball->vel=Vector2Zero(); //Initializing the starting velocity as zero 
     ball->radius=7.00;
     ball->strokes=0;
-    ball->lastSafePos=teepos;
+    ball->last_safe_pos=tee_pos;
     ball->state=BALL_AIM;
 }
 
@@ -50,14 +50,14 @@ void BallComeToRest(Ball *ball)
 {
     ball->vel=Vector2Zero();
     ball->state=BALL_AIM;
-    ball->lastSafePos=ball->pos; //lastSafePos is only updated when the ball comes to a natural stop
+    ball->last_safe_pos=ball->pos; //last_safe_pos is only updated when the ball comes to a natural stop
 }
 
 void CheckCup(Ball *ball,Hole *hole)
 {
     if(CheckCupCollision(ball,hole))
     {
-        ball->pos=hole->cupPos;
+        ball->pos=hole->cup_pos;
         ball->vel=Vector2Zero();
         ball->state=BALL_SUNK;
         return;
@@ -78,15 +78,15 @@ void CheckHazards(Ball *ball,Hole *hole)
 
 void DropBall(Ball *ball, Hole *hole) //This function will only be called when the ball goes out of bounds state
 {
-    Vector2 target=ball->lastSafePos; //Just initialize it by lastsafepos
+    Vector2 target=ball->last_safe_pos; //Just initialize it by lastsafepos
 
-    if(hole->dropZone.width >0.00 && hole->dropZone.height>0.00) // Just to guarantee whether it is positive or not, nothing crucial
+    if(hole->drop_zone.width >0.00 && hole->drop_zone.height>0.00) // Just to guarantee whether it is positive or not, nothing crucial
     {
-        target=(Vector2){hole->dropZone.x+hole->dropZone.width*0.5 , hole->dropZone.y+hole->dropZone.height*0.5}; //When the ball goes oob state, then the ball will be kept at the center of rectangular dropZone
+        target=(Vector2){hole->drop_zone.x+hole->drop_zone.width*0.5 , hole->drop_zone.y+hole->drop_zone.height*0.5}; //When the ball goes oob state, then the ball will be kept at the center of rectangular drop_zone
 
     }
     ball->pos=target;
-    ball->lastSafePos=target;
+    ball->last_safe_pos=target;
     ball->vel=Vector2Zero();
     ball->strokes +=1; //One penalty stroke for pushing the ball towards out of bounds state
     ball->state=BALL_AIM;

@@ -1,0 +1,22 @@
+# hole 2 -- dogleg, sand on the inside corner
+hole 2
+par 3
+bounds 0 0 1600 900
+
+tee 200 740
+cup 1340 220 16
+drop 120 120 220 130
+
+# rails
+wall 0 0 1600 24 0.72
+wall 0 876 1600 24 0.72
+wall 0 0 24 900 0.72
+wall 1576 0 24 900 0.72
+
+# the corner block that makes the dogleg
+wall 700 380 260 300 0.85
+
+zone 1 24 620 1000 240 0 0
+zone 2 620 300 300 120 0 0
+zone 5 1000 620 300 200 0 0
+end
