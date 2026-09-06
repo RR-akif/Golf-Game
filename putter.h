@@ -28,6 +28,7 @@ typedef struct{
     float launch_power;
     float aim_angle;
     float offset;
+    float dir; // +1 while the bar is filling, -1 while it is emptying
     bool fired;
 } Putter;
 

@@ -14,6 +14,7 @@
 void putter_init(Putter *p){
     p->phase = putter_idle;
     p->t = p->power = p->launch_power = p->aim_angle = p->offset = 0.0f;
+    p->dir = 1.0f;
     p->fired = false;
 }
 
@@ -35,14 +36,19 @@ void putter_update(Putter *p, const InputState *in, Ball *ball, float dt){
         p->launch_power = 0.0f;
         p->fired = false;
 
-        if(addressable && in->charge_pressed) p->phase = putter_backswing;
+        if(addressable && in->charge_pressed){
+            p->phase = putter_backswing;
+            p->dir = 1.0f;
+        }
         return;
     }
 
-    // charging
+    // charging. the bar fills up to full, then drains back to zero, over and over,
+    // so the player has to release at the right moment
     if(in->charge_held){
-        p->power += dt / CHARGE_TIME;
-        if(p->power > 1.0f) p->power = 1.0f;
+        p->power += p->dir * dt / CHARGE_TIME;
+        if(p->power > 1.0f){ p->power = 1.0f; p->dir = -1.0f; }
+        if(p->power < 0.0f){ p->power = 0.0f; p->dir =  1.0f; }
     }
 
     if(in->cancel){
@@ -53,11 +59,10 @@ void putter_update(Putter *p, const InputState *in, Ball *ball, float dt){
     }
 
     if(in->charge_released){
-        if(p->power >= MIN_POWER){
-            p->launch_power = p->power;
-            p->fired = true;
-            BallLaunch(ball, DirFromAngle(p->aim_angle), p->launch_power);
-        }
+        // releasing at the bottom of the sweep still counts as a stroke, just a weak one
+        p->launch_power = (p->power < MIN_POWER) ? MIN_POWER : p->power;
+        p->fired = true;
+        BallLaunch(ball, DirFromAngle(p->aim_angle), p->launch_power);
         p->power = 0.0f;
         p->phase = putter_idle;
     }
