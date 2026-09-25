@@ -40,6 +40,7 @@ typedef struct {
     Texture2D menuBackground;
     Texture2D tutorialImage;
     Texture2D aboutImage;
+    Texture2D windSprite;
     Music menuMusic;
     Music gameMusic;
     bool muted;
@@ -134,6 +135,8 @@ void GameInit(GameApp *g)
     g->menuBackground = LoadTexture("menu.png");
     g->tutorialImage = LoadTexture("tutorials.png");
     g->aboutImage = LoadTexture("GolfGameCredit.png");
+    g->windSprite = LoadTexture("wind_sprite.png");
+    SetTextureFilter(g->windSprite,TEXTURE_FILTER_BILINEAR);
     g->menuMusic = LoadMusicStream("golfmenu.mp3");
     g->gameMusic = LoadMusicStream("gamemusic.mp3");
     g->menuMusic.looping = true;
@@ -288,6 +291,7 @@ int main(void)
         ClearBackground((Color){92,92,56,255});
         BeginMode2D(game.render.cam);
         DrawCourse(hole);
+        DrawWindZones(hole,game.windSprite,(float)GetTime());
         DrawBall(&game.ball);
         DrawRails(hole);
         if (game.state == GS_PLAYING && game.ball.state == BALL_AIM) DrawAimGuide(&game.ball,hole,in.aim_angle,game.putter.power);
@@ -309,6 +313,7 @@ int main(void)
     UnloadTexture(game.menuBackground);
     UnloadTexture(game.tutorialImage);
     UnloadTexture(game.aboutImage);
+    UnloadTexture(game.windSprite);
 
     CloseAudioDevice();
     CloseWindow();

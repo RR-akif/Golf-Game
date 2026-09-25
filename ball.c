@@ -1,7 +1,7 @@
 #include "ball.h"
 #include "physics.h"
 #include "raymath.h"
-#include <math.h>
+
 
 
 
