@@ -149,6 +149,7 @@ Hole *course_current(Course *c){
     return &c->holes[c->current];
 }
 
+
 // now for scoring part
 
 const char *score_name(int strokes, int par){
@@ -161,7 +162,7 @@ const char *score_name(int strokes, int par){
         case 1: return "BOGEY";
         case 2: return "DOUBLE BOGEY";
         case 3: return "TRIPLE BOGEY";
-        default : return (strokes < par) ? "GREAT" : "YOU SUCK, NOOB";
+        default : return (strokes < par) ? "GREAT" : "You suck,noob";
 
     }
 }
@@ -176,6 +177,7 @@ int Course_total(const int *scores, int hole_count){
     }
     return total;
 }
+
 // this function needs some reading for mee...
 int course_to_par(const Course *c, const int *scores){
     int diff = 0;
@@ -226,6 +228,7 @@ int WallAtPoint(const Hole *h, Vector2 p){
     }
     return -1;
 }
+
 // for undoing things while the editor is open ... hell yeah , we are making our own map
 Hole UndoBuffer;
 bool UndoValid = false;
@@ -305,9 +308,6 @@ void editor_update(Edtior *e, Hole *h, const InputState *in){
 
     }
     // forwhat
-
-
-
 
 
 }

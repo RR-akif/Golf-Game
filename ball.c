@@ -6,7 +6,7 @@
 
 
 //Define
-#define MAX_LAUNCH_SPEED 900.00
+#define MAX_LAUNCH_SPEED 1300.00
 #define REST_SPEED 12.00
 #define MAX_STEP_DISTANCE 4.00 // The max distance(in pixels) the ball is allowed to travel in a single physics calculation step without causing tunneling or passing through any object
 #define MAX_SUBSTEPS 8   // maximum dynamic number of smaller micro-steps the code decides to split thhe current frame into
@@ -92,13 +92,13 @@ void DropBall(Ball *ball, Hole *hole) //This function will only be called when t
     ball->state=BALL_AIM;
 }
 
+
 void StepPhysics(Ball *ball,Hole *hole,float dt) //Handling the rolling state of the ball
 {
     SurfaceType surf=SurfaceAt(hole,ball->pos);
 
     ApplyWind(ball,WindAt(hole,ball->pos),dt); //The second parameter was the value of wind vector. To get the value, we used the function windat, as it returns the wind vector
     ApplyFriction(ball,FrictionOf(surf),dt);
-    
     ball->pos=Vector2Add(ball->pos,Vector2Scale(ball->vel,dt)); //Updating the ball's position
 
     CheckCup(ball,hole);

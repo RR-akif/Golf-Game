@@ -22,7 +22,7 @@
 #define ICE_BASE  (Color){198,226,240,255}
 #define MUD_BASE  (Color){110,84,56,255}
 #define BALL_WHITE (Color){250,250,252,255}
-#define SHADOW  (Color){0,0,0,55}
+#define SHADOW  (Color){0,0,0,180}
 
 
 // camera setup/...
@@ -110,7 +110,7 @@ void DrawCourse(const Hole *h)
     //drawing specks or small squares inside the course
     SetRandomSeed(h->number*7919);//This initializes thr random number generator function. And when the parameter inside this function varies then the generated random number also changes. h->number defined "which number of hole this is", so for each holes we will get different random values
     int specks=(int)((h->bounds.width*h->bounds.height)/1600.00);//total number of specks
-    Color dark=ColorBrightness(GRASS_BASE,-0.13); //defining a dark color for those specks
+    Color dark=ColorBrightness(GRASS_BASE,-0.5); //defining a dark color for those specks
     for(int i=0;i<specks;i++)
     {
         DrawRectangle(((int)GetRandomValue(h->bounds.x , h->bounds.x+h->bounds.width)) , ((int)GetRandomValue(h->bounds.y , h->bounds.y+h->bounds.height)) ,2 ,2,dark);
@@ -171,7 +171,7 @@ void DrawBall(const Ball *b)
     if (b->state==BALL_OOB) return;
     DrawEllipse((int)(b->pos.x + 2),(int)(b->pos.y + 3),b->radius*1.05f,b->radius*0.55f,SHADOW);// draw the shadow effect. Ellipse-{centerX,centerY,horizontal radius,vertical radius,color}
     DrawCircleV(b->pos,b->radius,BALL_WHITE); //main ball
-    DrawCircleLinesV(b->pos, b->radius, Fade(BLACK, 0.22f)); //drawing the outline of the ball by black with 22% opacity
+    DrawCircleLinesV(b->pos, b->radius, Fade(BLACK, 0.80)); //drawing the outline of the ball by black with 22% opacity
 }
 
 
@@ -222,6 +222,6 @@ void DrawHUD(const Hole *h, const Ball *b, const Putter *p,int hole_index, int h
     if (PutterIsCharging(p))
         DrawPowerBar(sw*0.5-130.0 , sh-54.0 , 260.0 , 22.0 , p->power); //draw the power bar while it is charging
 
-    DrawText("LMB hold to charge, release to hit  |  RMB cancel  | wheel zoom  |  F1 editor  |  R reset",20, sh - 26, 15, Fade(RAYWHITE, 0.6f));
+    DrawText("LMB hold to charge, release to hit  |  RMB cancel  |  F1 editor  |  R reset",20, sh - 26, 15, Fade(RAYWHITE, 0.6f));
 }
 

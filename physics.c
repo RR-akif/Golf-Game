@@ -9,9 +9,9 @@
 #define CUP_CAPTURE_SPEED 250.00
 
 
-//Frictions for distinct surfaces, declaring an array, as the values cannot be modified so we should use const   int a[6]={[2]=50,[7]=100}; a]2]=50,a[7]=100, other values are set to zero
+//Frictions for distinct surfaces, declaring an array, as the values cannot be modified so we should use const   int a[6]={[2]=50,[7]=100}; a[2]=50,a[7]=100, other values are set to zero
 const float kfriction[SURF_COUNT]={
-    [SURF_GREEN]=420.0,
+    [SURF_GREEN]=400.0,
     [SURF_FAIRWAY]=300.0,
     [SURF_SAND]=1400.00,
     [SURF_ICE]=90.0,
@@ -20,11 +20,13 @@ const float kfriction[SURF_COUNT]={
     [SURF_BOOST]=-600.0, //boosts the velocity
 };
 
+
 float FrictionOf(SurfaceType s)
 {
     if(s<0 || s>=SURF_COUNT) return kfriction[SURF_GREEN]; // To avoid array out of bounds
     return kfriction[s];
 }
+
 
 //Determining the surface at which the ball is lying currently
 SurfaceType SurfaceAt(Hole *hole,Vector2 p)
@@ -50,7 +52,7 @@ Vector2 WindAt(Hole *hole, Vector2 p)
     {
         if(CheckCollisionPointRec(p,hole->zones[i].area))
         {
-            w=Vector2Add(w,hole->zones[i].wind); //Accumulate the values of wind for distinct surfaces, wind is an acceleration not a velocity
+            w=Vector2Add(w,hole->zones[i].wind); //Accumulate the values of wind for distinct surfaces, wind is an acceleration not a velocity. If there are overlapping regions, then this wind is counted for both surfaces due to the for loop.
         }
     }
     return w;
@@ -69,6 +71,7 @@ void ApplyFriction(Ball *ball,float decel,float dt)
 
     ball->vel=Vector2Scale(ball->vel,newspeed/speed); // The ratio is always less than 1, so the valocity will be reduced gradually.
 }
+
 
 //Apply wind
 void ApplyWind(Ball *b,Vector2 wind,float dt)
