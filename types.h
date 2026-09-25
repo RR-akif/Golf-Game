@@ -55,6 +55,11 @@ typedef struct
     BallState state;
     int strokes;
     Vector2 last_safe_pos; //When the ball is in out of bounds state, then it is kept to its final safe position
+
+    bool hitWater;
+    bool hitWall ; //To add sound effects.
+    bool hitCup;
+    bool hitByPutter;
 }Ball;
 
 

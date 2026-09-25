@@ -43,6 +43,11 @@ typedef struct {
     Texture2D windSprite;
     Music menuMusic;
     Music gameMusic;
+
+    Sound waterSound;
+    Sound wallSound;
+    Sound cupSound;//These are short sound effects , so datatype is sound.
+    Sound putterSound;
     bool muted;
 } GameApp;
 
@@ -52,14 +57,14 @@ void DrawFullscreenTexture(Texture2D texture)
     Rectangle source = {0,0,(float)texture.width,(float)texture.height};
     Rectangle destination = {0,0,(float)GetScreenWidth(),(float)GetScreenHeight()};
     Vector2 origin = {0,0};
-    DrawTexturePro(texture,source,destination,origin,0.0f,WHITE);
+    DrawTexturePro(texture,source,destination,origin,0.0f,WHITE); //Source is used to select a certain portion from our texture , destination is our  screen at which plavce we are going to place it.Origin is the mid of the screen , and next parameter is the rotation of oiur texture . The last parameter basically is multiplied by the original color of the texture giving a white tint.
 }
 
 
 bool DrawMenuButton(Rectangle rect,const char *text)
 {
     Vector2 mouse = GetMousePosition();
-    bool hovered = CheckCollisionPointRec(mouse,rect);
+    bool hovered = CheckCollisionPointRec(mouse,rect); //detecting whether the mouse is at the position of the rectangle or it is colliding with the rectangle
 
     Color buttonColor;
     if (hovered) buttonColor = (Color){70,120,70,230};
@@ -69,8 +74,9 @@ bool DrawMenuButton(Rectangle rect,const char *text)
     DrawRectangleRoundedLines(rect,0.20f,10,(Color){220,220,180,255});
 
     int fontSize = 30;
-    int textWidth = MeasureText(text,fontSize);
-    DrawText(text,(int)(rect.x + rect.width/2 - textWidth/2),(int)(rect.y + rect.height/2 - fontSize/2),fontSize,WHITE);
+    int textWidth = MeasureText(text,fontSize); //Returns the width of the text in pixel
+    DrawText(text,(int)(rect.x + rect.width/2 - textWidth/2),(int)(rect.y + rect.height/2 - fontSize/2),fontSize,WHITE); //Treating the fontsize as the text height. Drawing the text at the middle of the rectangle
+
     if (hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) return true;
     return false;
 }
@@ -102,15 +108,15 @@ void StartMenuMusic(GameApp *g)
 
 void ToggleMute(GameApp *g)
 {
-    g->muted = !g->muted;
+    g->muted = !g->muted; //Toggling sound
 
     if (g->muted) {
-    SetMusicVolume(g->menuMusic,0.0f);
-    SetMusicVolume(g->gameMusic,0.0f);
+        SetMusicVolume(g->menuMusic,0.0f);
+        SetMusicVolume(g->gameMusic,0.0f);
     } 
     else {
-    SetMusicVolume(g->menuMusic,0.45f);
-    SetMusicVolume(g->gameMusic,0.35f);
+        SetMusicVolume(g->menuMusic,0.6f);
+        SetMusicVolume(g->gameMusic,0.45f);
     }
 }
 
@@ -125,6 +131,7 @@ void GameInit(GameApp *g)
 
     InputInit(&g->input_sys);
     EditorInit(&g->editor);
+
     BallInit(&g->ball,course_current(&g->course)->tee_pos);
     putter_init(&g->putter);
     RenderInit(&g->render,g->ball.pos);
@@ -139,10 +146,21 @@ void GameInit(GameApp *g)
     SetTextureFilter(g->windSprite,TEXTURE_FILTER_BILINEAR);
     g->menuMusic = LoadMusicStream("golfmenu.mp3");
     g->gameMusic = LoadMusicStream("gamemusic.mp3");
+
+    g->waterSound = LoadSound("water.mp3");
+    g->wallSound = LoadSound("wallcollision.mp3");
+    g->cupSound = LoadSound("ballInCup.mp3");
+    g->putterSound = LoadSound("BallStrike.mp3");
+
+    SetSoundVolume(g->waterSound,0.35f);
+    SetSoundVolume(g->wallSound,1.0f);
+    SetSoundVolume(g->cupSound,0.8f);
+    SetSoundVolume(g->putterSound,1.00f);
+
     g->menuMusic.looping = true;
-    g->gameMusic.looping = true;
-    SetMusicVolume(g->menuMusic,0.45f);
-    SetMusicVolume(g->gameMusic,0.35f);
+    g->gameMusic.looping = true; //music will be continued after ending
+    SetMusicVolume(g->menuMusic,0.6f);
+    SetMusicVolume(g->gameMusic,0.45f);
     PlayMusicStream(g->menuMusic);
 }
 
@@ -150,25 +168,32 @@ void GameInit(GameApp *g)
 bool DrawMainMenu(GameApp *g)
 {
     DrawFullscreenTexture(g->menuBackground);
+
     DrawRectangle(0,0,GetScreenWidth(),GetScreenHeight(),(Color){0,0,0,70});
+
     const char *title = "MINI GOLF";
     int titleFontSize = 70;
     int titleWidth = MeasureText(title,titleFontSize);
-    DrawText(title,GetScreenWidth()/2 - titleWidth/2,80,titleFontSize,WHITE);
+    DrawText(title,GetScreenWidth()/2 - titleWidth/2,80,titleFontSize,WHITE); // drawtext receives a pointer(pre defined) , so we declared it as a pointer.
+
     float buttonWidth = 260.0f;
     float buttonHeight = 60.0f;
     float centerX = GetScreenWidth()/2.0f - buttonWidth/2.0f;
+
     Rectangle playButton = {centerX,220,buttonWidth,buttonHeight};
     Rectangle tutorialButton = {centerX,300,buttonWidth,buttonHeight};
     Rectangle aboutButton = {centerX,380,buttonWidth,buttonHeight};
     Rectangle soundButton = {centerX,460,buttonWidth,buttonHeight};
     Rectangle exitButton = {centerX,540,buttonWidth,buttonHeight};
+
     if (DrawMenuButton(playButton,"PLAY")) {
-    g->screen = SCREEN_GAME;
-    StartGameMusic(g);
+        g->screen = SCREEN_GAME;
+        StartGameMusic(g);
     }
+
     if (DrawMenuButton(tutorialButton,"TUTORIAL")) g->screen = SCREEN_TUTORIAL;
     if (DrawMenuButton(aboutButton,"ABOUT US")) g->screen = SCREEN_ABOUT;
+
     const char *soundText;
     if (g->muted) soundText = "SOUND: OFF";
     else soundText = "SOUND: ON";
@@ -200,72 +225,105 @@ int main(void)
 
 
     InitWindow(1280,720,"Mini Golf By Akif Rafin");
+    SetExitKey(KEY_NULL); //Normally esc is assumed as exit key, so if we press exit at any time then it gets out of the game . But we want if esc is pressed then , it should return to our game menu, so exit key is set to be null.
     InitAudioDevice();
-    SetExitKey(KEY_NULL);
     SetTargetFPS(60);
 
     GameApp game;
     GameInit(&game);
-    bool shouldQuit = false;
+    bool shouldQuit = false; //When player presses exit , then it becomes true
 
 
     while (!WindowShouldClose() && !shouldQuit) {
         float dt = GetFrameTime();
-        if (dt > 0.05f) dt = 0.05f;
+
         UpdateMusicStream(game.menuMusic);
-        UpdateMusicStream(game.gameMusic);
+        UpdateMusicStream(game.gameMusic);//This is applied per frame
+
         if (game.screen == SCREEN_MAIN_MENU) {
-        BeginDrawing();
-        ClearBackground(BLACK);
-        shouldQuit = DrawMainMenu(&game);
-        EndDrawing();
-        continue;
+            BeginDrawing();
+            ClearBackground(BLACK);
+            shouldQuit = DrawMainMenu(&game);
+            EndDrawing();
+            continue; // If we dont use continue, then compiler will go downward and execute teh rest task , and main game will be started, so we used continue , so that it moves to next iteration.
         }
+
         if (game.screen == SCREEN_TUTORIAL) {
-        if (IsKeyPressed(KEY_ESCAPE)) game.screen = SCREEN_MAIN_MENU;
-        BeginDrawing();
-        ClearBackground(BLACK);
-        DrawTutorialScreen(&game);
-        EndDrawing();
-        continue;
+            if (IsKeyPressed(KEY_ESCAPE)) game.screen = SCREEN_MAIN_MENU;
+            BeginDrawing();
+            ClearBackground(BLACK);
+            DrawTutorialScreen(&game);
+            EndDrawing();
+            continue;
         }
+
         if (game.screen == SCREEN_ABOUT) {
-        if (IsKeyPressed(KEY_ESCAPE)) game.screen = SCREEN_MAIN_MENU;
-        BeginDrawing();
-        ClearBackground(BLACK);
-        DrawAboutScreen(&game);
-        EndDrawing();
-        continue;
+            if (IsKeyPressed(KEY_ESCAPE)) game.screen = SCREEN_MAIN_MENU;
+            BeginDrawing();
+            ClearBackground(BLACK);
+            DrawAboutScreen(&game);
+            EndDrawing();
+            continue;
         }
+
+
         Hole *hole = course_current(&game.course);
         InputState in = InputPoll(&game.input_sys,game.ball.pos,game.render.cam,dt);
+
         if (IsKeyPressed(KEY_ESCAPE)) {
-        game.screen = SCREEN_MAIN_MENU;
-        StartMenuMusic(&game);
-        continue;
+            game.screen = SCREEN_MAIN_MENU;
+            StartMenuMusic(&game);
+            continue;
         }
+
         switch (game.state) {
         case GS_PLAYING:
             if (IsKeyPressed(KEY_R)) {
-            game.ball.pos = hole->tee_pos;
-            game.ball.vel = Vector2Zero();
-            game.ball.state = BALL_AIM;
+                game.ball.pos = hole->tee_pos;
+                game.ball.vel = Vector2Zero();
+                game.ball.state = BALL_AIM;
             }
+
             putter_update(&game.putter,&in,&game.ball,dt);
-            BallUpdate(&game.ball,hole,dt);
-            if (game.ball.state == BALL_SUNK) {
-            game.scores[game.course.current] = game.ball.strokes;
-            game.hole_done_t = 0.0f;
-            game.state = GS_HOLE_DONE;
-            int idx = game.course.current;
-            if (game.best[idx] == 0 || game.ball.strokes < game.best[idx]) game.best[idx] = game.ball.strokes;
-            TraceLog(LOG_INFO,"hole %d: %d strokes (par %d) -- %s",hole->number,game.ball.strokes,hole->par,score_name(game.ball.strokes,hole->par));
-            } else if (game.ball.state == BALL_AIM && game.ball.strokes >= hole->par + STROKE_LIMIT_OVER_PAR) {
-            game.scores[game.course.current] = hole->par + STROKE_LIMIT_OVER_PAR;
-            game.hole_done_t = 0.0f;
-            game.state = GS_HOLE_DONE;
+            if (game.ball.hitByPutter)
+            {
+                PlaySound(game.putterSound);
+                game.ball.hitByPutter = false;
             }
+
+            BallUpdate(&game.ball,hole,dt);
+
+            if (game.ball.hitWater)
+            {
+                PlaySound(game.waterSound);
+            }
+
+            if (game.ball.hitWall)
+            {
+                PlaySound(game.wallSound);
+            }
+
+            if (game.ball.hitCup)
+            {
+                PlaySound(game.cupSound);
+            }
+
+            if (game.ball.state == BALL_SUNK) {
+                game.scores[game.course.current] = game.ball.strokes;
+                game.hole_done_t = 0.0f;
+                game.state = GS_HOLE_DONE;
+                int idx = game.course.current;
+                if (game.best[idx] == 0 || game.ball.strokes < game.best[idx]) game.best[idx] = game.ball.strokes;
+                TraceLog(LOG_INFO,"hole %d: %d strokes (par %d) -- %s",hole->number,game.ball.strokes,hole->par,score_name(game.ball.strokes,hole->par));
+            }
+            else if (game.ball.state == BALL_AIM && game.ball.strokes >= hole->par + STROKE_LIMIT_OVER_PAR) {
+                game.scores[game.course.current] = hole->par + STROKE_LIMIT_OVER_PAR;
+                game.hole_done_t = 0.0f;
+                game.state = GS_HOLE_DONE;
+            }
+
             break;
+
         case GS_HOLE_DONE:
             game.hole_done_t += dt;
             if (game.hole_done_t >= HOLE_DONE_PAUSE || in.confirm) {
@@ -273,6 +331,7 @@ int main(void)
             else game.state = GS_SCOREBOARD;
             }
             break;
+
         case GS_SCOREBOARD:
             if (in.confirm) {
             game.course.current = 0;
@@ -280,6 +339,7 @@ int main(void)
             StartHole(&game);
             }
             break;
+
         default:
             break;
         }
@@ -297,7 +357,7 @@ int main(void)
         if (game.state == GS_PLAYING && game.ball.state == BALL_AIM) DrawAimGuide(&game.ball,hole,in.aim_angle,game.putter.power);
         putter_draw(&game.putter,&game.ball);
         EndMode2D();
-        DrawHUD(hole,&game.ball,&game.putter,game.course.current,game.course.hole_count,Course_total(game.scores,game.course.hole_count));
+        DrawHUD(hole,&game.ball,&game.putter,game.course.current,game.course.hole_count,Course_total(game.scores,game.course.current));
         if (game.state == GS_HOLE_DONE) {
         const char *msg = score_name(game.scores[game.course.current],hole->par);
         int tw = MeasureText(msg,54);
@@ -310,6 +370,10 @@ int main(void)
     StopMusicStream(game.gameMusic);
     UnloadMusicStream(game.menuMusic);
     UnloadMusicStream(game.gameMusic);
+    UnloadSound(game.waterSound);
+    UnloadSound(game.wallSound);
+    UnloadSound(game.cupSound);
+    UnloadSound(game.putterSound);
     UnloadTexture(game.menuBackground);
     UnloadTexture(game.tutorialImage);
     UnloadTexture(game.aboutImage);
