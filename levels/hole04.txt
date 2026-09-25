@@ -1,0 +1,24 @@
+# hole 4 -- ice rink: cup hides behind a block, bank it off the back wall
+hole 4
+par 3
+bounds 0 0 1600 900
+
+tee 200 450
+cup 1300 450 16
+drop 60 720 180 90
+
+# rails
+wall 0 0 1600 24 0.72
+wall 0 876 1600 24 0.72
+wall 0 0 24 900 0.72
+wall 1576 0 24 900 0.72
+
+# block in front of the cup, bouncy back wall behind it
+wall 1160 370 40 160 0.8
+wall 1420 200 40 500 0.95
+
+# big ice sheet, small mud collar around the cup to kill speed
+zone 1 24 380 380 140 0 0
+zone 3 404 200 1016 500 0 0
+zone 4 1250 400 100 100 0 0
+end

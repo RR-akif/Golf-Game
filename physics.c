@@ -12,7 +12,7 @@
 //Frictions for distinct surfaces, declaring an array, as the values cannot be modified so we should use const   int a[6]={[2]=50,[7]=100}; a]2]=50,a[7]=100, other values are set to zero
 const float kfriction[SURF_COUNT]={
     [SURF_GREEN]=420.0,
-    [SURF_FAIRWAY]=300.f,
+    [SURF_FAIRWAY]=300.0,
     [SURF_SAND]=1400.00,
     [SURF_ICE]=90.0,
     [SURF_MUD]=2600.00,

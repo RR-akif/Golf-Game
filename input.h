@@ -11,13 +11,12 @@ typedef struct {
     float aim_angle;
     Vector2 pointer_world;
     bool pointer_valid;
-
     bool charge_pressed;
     bool charge_held;
     bool charge_released;
 
     bool cancel;
-
+    
     bool confirm;
     bool cam_zoom_delta;
 

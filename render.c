@@ -25,7 +25,7 @@
 #define SHADOW  (Color){0,0,0,55}
 
 
-//*************Camera SetUp*************//
+// camera setup/...
 void RenderInit(RenderState *r,Vector2 ballpos)
 {
     r->cam.offset=(Vector2){GetScreenWidth()*0.5 , GetScreenHeight()*0.5}; // these two are predefined in raylib.it defines where the point should be in screen map,it is calculated as the point(target point) should be at the middle
@@ -89,7 +89,7 @@ void RenderUpdateCamera(RenderState *r,const Ball *b,const Hole *h,const Putter 
 }
 
 
-//*********World Drawing*********** //
+// world drawing..
 Color SurfaceColor(SurfaceType s) // Takes surfacetype as input and returns equivalent color
 {
     switch (s) {
@@ -194,7 +194,7 @@ void DrawAimGuide(const Ball *b, const Hole *h, float angle, float power)
 
 
 //Drawing the power bar
-static void DrawPowerBar(float x,float y,float w,float h,float power) // Here power is significant that marks how much space will be filled up. If power=0.3, then 30% of the power bar will be filled up
+void DrawPowerBar(float x,float y,float w,float h,float power) // Here power is significant that marks how much space will be filled up. If power=0.3, then 30% of the power bar will be filled up
 {
     DrawRectangleRounded((Rectangle){x-3,y-3,w+6,h+6},0.5,8,Fade(BLACK,0.55)); // (rectangle,roundness,smoothness,color), this just draws a shaded rectangle like shadow around the actual bar.     
     Color fill=ColorLerp((Color){90,200,100,255},(Color){225,70,60,255},power); // Returns a color combining both. if power=0, returns color1(likely blue) , if power=1 ,it returns color2(likely red)

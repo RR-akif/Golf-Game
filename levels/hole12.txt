@@ -1,0 +1,38 @@
+# hole 12 -- final: crosswinds, ice, water moat, 1-pillar cup
+hole 12
+par 5
+bounds 0 0 1600 900
+
+tee 100 450
+cup 1470 450 14
+drop 1110 400 140 100
+
+# rails
+wall 0 0 1600 24 0.72
+wall 0 876 1600 24 0.72
+wall 0 0 24 900 0.72
+wall 1576 0 24 900 0.72
+
+# wind funnel gates
+wall 460 24 40 300 0.85
+wall 460 600 40 276 0.85
+
+# floating blockers in the ice field
+wall 760 200 40 220 0.9
+wall 760 500 40 220 0.9
+wall 1020 300 40 80 0.9
+wall 1020 520 40 80 0.9
+
+# pillar guarding the bridge -- must come in off an angle
+wall 1344 430 32 40 0.95
+
+# tee ramp, then ice with opposing winds, then the moat and bridge
+zone 1 24 380 436 140 0 0
+zone 6 240 410 180 80 0 0
+zone 3 500 120 800 660 0 0
+zone 3 520 140 760 160 0 120
+zone 3 520 620 760 140 0 -120
+zone 5 1300 24 120 356 0 0
+zone 5 1300 520 120 356 0 0
+zone 0 1420 330 156 240 0 0
+end

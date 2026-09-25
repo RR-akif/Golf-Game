@@ -1,0 +1,32 @@
+# hole 10 -- gauntlet: three offset slots, water in the dead ends
+hole 10
+par 4
+bounds 0 0 1600 900
+
+tee 120 450
+cup 1480 450 14
+drop 200 640 180 90
+
+# rails
+wall 0 0 1600 24 0.72
+wall 0 876 1600 24 0.72
+wall 0 0 24 900 0.72
+wall 1576 0 24 900 0.72
+
+# three slots, each offset from the last
+wall 520 24 50 340 0.85
+wall 520 464 50 412 0.85
+wall 880 24 50 520 0.85
+wall 880 644 50 232 0.85
+wall 1220 24 50 300 0.85
+wall 1220 424 50 452 0.85
+
+# mud off the tee line, boost to the first slot, water in the dead ends
+zone 1 24 360 496 180 0 0
+zone 4 24 24 496 180 0 0
+zone 4 24 740 496 136 0 0
+zone 6 240 410 200 80 0 0
+zone 5 570 24 310 240 0 0
+zone 5 930 700 290 176 0 0
+zone 3 1270 330 306 240 0 0
+end

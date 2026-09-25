@@ -1,0 +1,34 @@
+# hole 11 -- the maze: one route, every wrong turn is mud
+hole 11
+par 6
+bounds 0 0 1600 900
+
+tee 180 120
+cup 1440 780 14
+drop 60 60 100 70
+
+# rails
+wall 0 0 1600 24 0.72
+wall 0 876 1600 24 0.72
+wall 0 0 24 900 0.72
+wall 1576 0 24 900 0.72
+
+# serpentine corridors -- alternating gaps, bottom then top
+wall 340 24 40 560 0.8
+wall 640 316 40 560 0.8
+wall 940 24 40 560 0.8
+wall 1240 316 40 560 0.8
+
+# teeth off the corridor walls, a dead-end pocket under each one
+wall 480 440 160 40 0.8
+wall 1080 440 160 40 0.8
+
+# fairway on the turns, mud in the pockets, ice on the final run
+zone 1 24 600 616 276 0 0
+zone 1 380 24 560 292 0 0
+zone 1 680 600 560 276 0 0
+zone 1 980 24 596 292 0 0
+zone 4 500 480 140 110 0 0
+zone 4 1100 480 140 110 0 0
+zone 3 1280 600 296 276 0 0
+end

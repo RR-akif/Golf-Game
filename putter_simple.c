@@ -1,15 +1,12 @@
 #include "putter.h"
 #include "ball.h"
 
-#include "raymath.h"
+
 
 
 #define CHARGE_TIME 1.15f
 #define MIN_POWER 0.05f
 
-
-// no animation version. the putter only holds the charge and fires the ball.
-// the swing animation lives in unused/putter_anim.c
 
 void putter_init(Putter *p){
     p->phase = putter_idle;
@@ -43,8 +40,7 @@ void putter_update(Putter *p, const InputState *in, Ball *ball, float dt){
         return;
     }
 
-    // charging. the bar fills up to full, then drains back to zero, over and over,
-    // so the player has to release at the right moment
+   // chargung logic ekhanee...
     if(in->charge_held){
         p->power += p->dir * dt / CHARGE_TIME;
         if(p->power > 1.0f){ p->power = 1.0f; p->dir = -1.0f; }
@@ -52,14 +48,12 @@ void putter_update(Putter *p, const InputState *in, Ball *ball, float dt){
     }
 
     if(in->cancel){
-        // no launch, no stroke -- the ball is never touched
         p->power = 0.0f;
         p->phase = putter_idle;
         return;
     }
 
     if(in->charge_released){
-        // releasing at the bottom of the sweep still counts as a stroke, just a weak one
         p->launch_power = (p->power < MIN_POWER) ? MIN_POWER : p->power;
         p->fired = true;
         BallLaunch(ball, DirFromAngle(p->aim_angle), p->launch_power);

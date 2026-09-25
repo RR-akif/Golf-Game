@@ -1,0 +1,28 @@
+# hole 5 -- boost ramp: ride the pads around the blockers
+hole 5
+par 4
+bounds 0 0 1600 900
+
+tee 160 760
+cup 1400 180 16
+drop 600 60 180 90
+
+# rails
+wall 0 0 1600 24 0.72
+wall 0 876 1600 24 0.72
+wall 0 0 24 900 0.72
+wall 1576 0 24 900 0.72
+
+# staircase of blockers
+wall 480 460 60 416 0.8
+wall 1000 24 60 460 0.8
+
+# mud pits off the line, boost pads on the road
+zone 1 24 360 456 516 0 0
+zone 1 540 300 460 400 0 0
+zone 1 1060 500 516 200 0 0
+zone 1 1240 24 336 476 0 0
+zone 4 24 24 456 260 0 0
+zone 4 540 720 460 156 0 0
+zone 6 600 540 300 80 0 0
+end

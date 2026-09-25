@@ -1,10 +1,4 @@
-/* ===========================================================================
-   main.c -- the window, the loop and the top-level state machine.  [SHARED]
 
-   This file owns nothing except the ORDER of operations. Both people may
-   edit it, but only to add a line to one of the numbered sections below,
-   and you tell your partner when you do.
-   ======================================================================== */
 #include "raylib.h"
 #include "raymath.h"
 
@@ -16,7 +10,7 @@
 #include "render.h"
 
 #define STROKE_LIMIT_OVER_PAR 5
-#define HOLE_DONE_PAUSE       1.6f
+#define HOLE_DONE_PAUSE 1.6f
 
 typedef struct {
     GameStateId state;
@@ -27,9 +21,9 @@ typedef struct {
     Edtior      editor;
     RenderState render;
     int         scores[MAX_HOLES];
-    int         best[MAX_HOLES];      /* best score per hole, persisted */
+    int         best[MAX_HOLES];      
     float       hole_done_t;
-    float       prev_speed;           /* to detect an impact this frame */
+    float       prev_speed;           //to detect an impact this frame 
 } GameApp;
 
 static void StartHole(GameApp *g)
@@ -66,21 +60,21 @@ int main(void)
 
     while (!WindowShouldClose())
     {
-        /* ---- 1. time, clamped so one slow frame cannot teleport the ball */
+
         float dt = GetFrameTime();
         if (dt > 0.05f) dt = 0.05f;
 
         Hole *hole = course_current(&game.course);
 
-        /* ---- 2. input (the ONLY place hardware is read) ---------------- */
+        
         InputState in = InputPoll(&game.input_sys, game.ball.pos,
                                   game.render.cam, dt);
 
-        /* ---- 3. update, by state --------------------------------------- */
+
         switch (game.state)
         {
         case GS_PLAYING:
-            if (IsKeyPressed(KEY_R)) {          /* reset, keeping the score */
+            if (IsKeyPressed(KEY_R)) {          // reset. score kept
                 game.ball.pos = hole->tee_pos;
                 game.ball.vel = Vector2Zero();
                 game.ball.state = BALL_AIM;
@@ -94,7 +88,7 @@ int main(void)
                 game.hole_done_t = 0.0f;
                 game.state = GS_HOLE_DONE;
 
-                /* record a new best for this hole */
+                //record best 
                 int idx = game.course.current;
                 if (game.best[idx] == 0 || game.ball.strokes < game.best[idx]) {
                     game.best[idx] = game.ball.strokes;
@@ -106,7 +100,7 @@ int main(void)
             else if (game.ball.state == BALL_AIM &&
                      game.ball.strokes >= hole->par + STROKE_LIMIT_OVER_PAR) {
                 game.scores[game.course.current] =
-                    hole->par + STROKE_LIMIT_OVER_PAR;      /* picked up */
+                    hole->par + STROKE_LIMIT_OVER_PAR;      
                 game.hole_done_t = 0.0f;
                 game.state = GS_HOLE_DONE;
             }
@@ -121,7 +115,7 @@ int main(void)
             break;
 
         case GS_SCOREBOARD:
-            if (in.confirm) {                    /* play again */
+            if (in.confirm) {                    
                 game.course.current = 0;
                 for (int i = 0; i < MAX_HOLES; i++) game.scores[i] = 0;
                 StartHole(&game);
@@ -132,14 +126,14 @@ int main(void)
             break;
         }
 
-        /* ---- 4. camera ------------------------------------------------- */
+
         RenderUpdateCamera(&game.render, &game.ball, hole, &game.putter, dt);
 
-        /* ---- 5. draw --------------------------------------------------- */
+
         BeginDrawing();
             ClearBackground((Color){ 92, 92, 56, 255 });
 
-            BeginMode2D(game.render.cam);          /* --- world space --- */
+            BeginMode2D(game.render.cam);          // world space;
                 DrawCourse(hole);
                 DrawBall(&game.ball);
                 DrawRails(hole);
@@ -148,7 +142,7 @@ int main(void)
                     DrawAimGuide(&game.ball, hole, in.aim_angle,
                                  game.putter.power);
                 putter_draw(&game.putter, &game.ball);
-            EndMode2D();                           /* --- screen space --- */
+            EndMode2D();                           //screen space
 
             DrawHUD(hole, &game.ball, &game.putter,
                     game.course.current, game.course.hole_count,
