@@ -20,7 +20,12 @@ void BallInit(Ball *ball,Vector2 tee_pos)
     ball->strokes=0;
     ball->last_safe_pos=tee_pos;
     ball->state=BALL_AIM;
+    ball->hitWater = false;
+    ball->hitWall = false;
+    ball->hitCup=false;
+    ball->hitByPutter=false;
 }
+
 
 float BallSpeed(Ball *ball)
 {
@@ -44,6 +49,8 @@ void BallLaunch(Ball *ball,Vector2 dir,float power) // dir- the 2D direction the
     ball->vel=Vector2Scale(Vector2Normalize(dir),power * MAX_LAUNCH_SPEED); // ball moves along the desired direction
     ball->state=BALL_ROLL;
     ball->strokes+=1;
+
+    ball->hitByPutter = false;
 }
 
 void BallComeToRest(Ball *ball)
@@ -60,9 +67,11 @@ void CheckCup(Ball *ball,Hole *hole)
         ball->pos=hole->cup_pos;
         ball->vel=Vector2Zero();
         ball->state=BALL_SUNK;
+        ball->hitCup=true;
         return;
     }
 }
+
 
 void CheckHazards(Ball *ball,Hole *hole)
 {
@@ -71,10 +80,12 @@ void CheckHazards(Ball *ball,Hole *hole)
 
     if(inWater || outside)
     {
+        if(inWater) ball->hitWater=true;
         ball->vel=Vector2Zero();
         ball->state=BALL_OOB;
     }
 }
+
 
 void DropBall(Ball *ball, Hole *hole) //This function will only be called when the ball goes out of bounds state
 {
@@ -115,6 +126,11 @@ void StepPhysics(Ball *ball,Hole *hole,float dt) //Handling the rolling state of
 
 void BallUpdate(Ball *ball,Hole *hole,float dt)
 {
+    ball->hitWater = false;
+    ball->hitWall = false;
+    ball->hitCup = false;
+    ball->hitByPutter = false;
+
     switch(ball->state)
     {
         case BALL_AIM:

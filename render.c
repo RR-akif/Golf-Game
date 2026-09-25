@@ -266,6 +266,32 @@ void DrawHUD(const Hole *h, const Ball *b, const Putter *p,int hole_index, int h
 {
     int sw=GetScreenWidth(),sh=GetScreenHeight();
 
+    int currentTotal = total + b->strokes;
+
+    const char *scoreText = TextFormat("SCORE: %d",currentTotal);
+    int scoreFontSize = 32;
+    int scoreWidth = MeasureText(scoreText,scoreFontSize);
+
+    DrawRectangleRounded(
+        (Rectangle){
+            sw/2.0f - scoreWidth/2.0f - 20,
+            12,
+            scoreWidth + 40,
+            52
+        },
+        0.25f,
+        8,
+        Fade(BLACK,0.55f)
+    );
+
+    DrawText(
+        scoreText,
+        sw/2 - scoreWidth/2,
+        22,
+        scoreFontSize,
+        RAYWHITE
+    );
+
     DrawRectangleRounded((Rectangle){12,12,210,78},0.2,8,Fade(BLACK, 0.45));//Draw rectangle at the top of the bar to show game huds
     DrawText(TextFormat("HOLE %d / %d",h->number,hole_count),26,20,20,RAYWHITE); //TextFormat-Formatted string
     DrawText(TextFormat("PAR %d", h->par), 26, 44, 16, Fade(RAYWHITE, 0.75));
