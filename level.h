@@ -28,11 +28,11 @@ typedef struct{
     bool dragging;
     Vector2 drag_start;
     int grid_size;
-    int selected; 
+    int selected;
 }Edtior;
 
 
-// removed the build hole function... as i will draw map from text files..... so only about that is declared here...    
+// removed the build hole function... as i will draw map from text files..... so only about that is declared here...
 
 
 bool LoadHoleFromFile(Hole *h,const char *path);
@@ -60,7 +60,6 @@ const char *surface_name(SurfaceType s);
 
 void EditorInit(Edtior *e);
 void editor_update(Edtior *e, Hole *h, const InputState *in);
-
 
 
 

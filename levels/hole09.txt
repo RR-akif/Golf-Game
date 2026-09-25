@@ -1,0 +1,34 @@
+# hole 9 -- the spiral: wind inward, walls wrap the cup
+hole 9
+par 5
+bounds 0 0 1600 900
+
+tee 120 820
+cup 800 470 15
+drop 1400 60 150 90
+
+# rails
+wall 0 0 1600 24 0.72
+wall 0 876 1600 24 0.72
+wall 0 0 24 900 0.72
+wall 1576 0 24 900 0.72
+
+# outer ring of the spiral (opening bottom right)
+wall 240 160 1120 40 0.8
+wall 240 160 40 580 0.8
+wall 240 700 1000 40 0.8
+wall 1320 160 40 380 0.8
+
+# inner ring (opening on the left)
+wall 520 320 560 40 0.8
+wall 1040 320 40 300 0.8
+wall 520 580 560 40 0.8
+
+# fairway corridors, sand in the corners, fast inner chamber
+zone 1 24 760 1552 116 0 0
+zone 1 280 200 1040 120 0 0
+zone 1 280 620 960 80 0 0
+zone 2 280 200 160 120 0 0
+zone 2 1160 200 160 120 0 0
+zone 3 560 360 480 220 0 0
+end

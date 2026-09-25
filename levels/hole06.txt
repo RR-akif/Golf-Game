@@ -1,0 +1,27 @@
+# hole 6 -- island green: a bent causeway, a straight shot ends in the lake
+hole 6
+par 5
+bounds 0 0 1600 900
+
+tee 160 450
+cup 1340 450 16
+drop 520 400 150 100
+
+# rails
+wall 0 0 1600 24 0.72
+wall 0 876 1600 24 0.72
+wall 0 0 24 900 0.72
+wall 1576 0 24 900 0.72
+
+# walls pinch the approach to the causeway
+wall 700 24 40 330 0.8
+wall 700 546 40 330 0.8
+
+# lake, then the dog-legged causeway and the island on top of it
+zone 1 24 380 716 140 0 0
+zone 5 740 24 836 852 0 0
+zone 1 740 390 280 120 0 0
+zone 1 900 170 120 340 0 0
+zone 1 900 170 300 130 0 0
+zone 0 1180 150 340 480 0 0
+end

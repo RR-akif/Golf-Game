@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#define RAil 12.0f
+
 
 
 
@@ -91,7 +91,7 @@ bool LoadHoleFromFile(Hole *h, const char *path){
     char *text = LoadFileText(path);
     if(!text) return false;
 
-    *h = (Hole) {0}; // clearing the struct data, so that no overlap happens in future;
+    *h = (Hole){0}; // clearing the struct data, so that no overlap happens in future;
 
     //setting the defualt;
     h->par = 3;

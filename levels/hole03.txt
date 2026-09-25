@@ -1,0 +1,27 @@
+# hole 3 -- the gate: the only way through is the high gap, no straight line
+hole 3
+par 4
+bounds 0 0 1600 900
+
+tee 180 740
+cup 1400 740 16
+drop 60 60 180 90
+
+# rails
+wall 0 0 1600 24 0.72
+wall 0 876 1600 24 0.72
+wall 0 0 24 900 0.72
+wall 1576 0 24 900 0.72
+
+# gate -- short stub up top, long pillar below, 220px gap between them
+wall 780 24 60 56 0.85
+wall 780 300 60 576 0.85
+
+# fairway climbs to the gap and drops down to the cup, sand in the shortcuts
+zone 1 24 600 756 276 0 0
+zone 1 380 80 840 220 0 0
+zone 1 840 600 736 276 0 0
+zone 2 400 380 240 160 0 0
+zone 2 980 360 240 160 0 0
+zone 5 1440 24 136 136 0 0
+end

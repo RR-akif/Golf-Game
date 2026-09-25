@@ -18,7 +18,7 @@ Vector2 DirFromAngle(float angle){
 }
 
 void InputInit(InputSystem *sys){
-    sys ->aim_angle = 0.0f;
+    sys ->aim_angle = 0.0f; /// pore sohoje parsi sir
     sys -> right_held_time = 0.0f;
     sys -> right_drag_distance = 0.0f;
     sys -> right_was_down = false;

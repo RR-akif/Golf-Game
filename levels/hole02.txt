@@ -1,11 +1,11 @@
-# hole 2 -- dogleg, sand on the inside corner
+# hole 2 -- hairpin: out along the bottom, up the side, back to the cup
 hole 2
-par 3
+par 4
 bounds 0 0 1600 900
 
 tee 200 740
-cup 1340 220 16
-drop 120 120 220 130
+cup 260 290 16
+drop 880 760 180 70
 
 # rails
 wall 0 0 1600 24 0.72
@@ -13,10 +13,16 @@ wall 0 876 1600 24 0.72
 wall 0 0 24 900 0.72
 wall 1576 0 24 900 0.72
 
-# the corner block that makes the dogleg
-wall 700 380 260 300 0.85
+# divider that forces the hairpin
+wall 24 540 1136 40 0.85
 
-zone 1 24 620 1000 240 0 0
-zone 2 620 300 300 120 0 0
-zone 5 1000 620 300 200 0 0
+# fairway loop, sand on the inside of the turn, water on the outside corners
+zone 1 24 580 1552 296 0 0
+zone 1 1160 24 416 852 0 0
+zone 1 400 180 760 220 0 0
+zone 0 110 150 300 280 0 0
+zone 2 1180 380 160 140 0 0
+zone 2 560 420 220 100 0 0
+zone 5 1440 740 136 136 0 0
+zone 5 1440 24 136 136 0 0
 end

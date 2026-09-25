@@ -1,0 +1,29 @@
+# hole 7 -- crosswind canyon: wind pushes you off the shelf
+hole 7
+par 4
+bounds 0 0 1600 900
+
+tee 160 740
+cup 1420 200 16
+drop 60 60 180 90
+
+# rails
+wall 0 0 1600 24 0.72
+wall 0 876 1600 24 0.72
+wall 0 0 24 900 0.72
+wall 1576 0 24 900 0.72
+
+# canyon walls
+wall 420 24 40 520 0.8
+wall 880 360 40 516 0.8
+wall 1240 24 40 440 0.8
+
+# upward wind on the ice shelf, sand at the bottom of the drop
+zone 1 24 600 396 276 0 0
+zone 1 460 24 420 376 0 0
+zone 3 460 400 420 240 0 -140
+zone 1 460 640 420 236 0 0
+zone 1 920 24 320 336 0 0
+zone 2 920 600 320 276 0 0
+zone 1 1280 24 296 460 -90 0
+end
