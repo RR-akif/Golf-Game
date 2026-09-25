@@ -1,0 +1,720 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\lstset{
+  language=C,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape\color{black!60},
+  numbers=left,
+  numberstyle=\tiny,
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=false,
+  postbreak=\mbox{$\hookrightarrow$\space},
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true,
+  xleftmargin=1.5em,
+  framexleftmargin=1.5em,
+  morekeywords={bool,true,false}
+}
+
+% \code{file}{first}{last}: show real lines first..last of a source file, numbered as in the file
+\newcommand{\code}[3]{\lstinputlisting[firstline=#2,lastline=#3,firstnumber=#2]{../#1}}
+
+\setlist{itemsep=2pt}
+
+\title{Mini Golf: A Line-by-Line Guide to the Code\\[4pt]
+\large \texttt{types.h}, \texttt{input}, \texttt{level}, \texttt{putter} and the menu in \texttt{main.c}}
+\author{Golf-Game project}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+%======================================================================
+\section{Introduction}
+
+This document walks through every line of five parts of the game:
+
+\begin{itemize}
+  \item \texttt{types.h} -- the data types the whole game shares;
+  \item \texttt{input.h} / \texttt{input.c} -- reading the mouse;
+  \item \texttt{level.h} / \texttt{level.c} -- loading maps, the course, scoring and the editor;
+  \item \texttt{putter.h} / \texttt{putter\_simple.c} -- turning a mouse click into a shot;
+  \item the menu part of \texttt{main.c}.
+\end{itemize}
+
+All code listings are taken directly from the source files, and the line numbers on the left are the
+real line numbers in each file. So ``line 36 of \texttt{input.c}'' in the text is line 36 in your editor too.
+
+The game uses the \textbf{raylib} library. A few raylib types appear everywhere:
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+raylib type & meaning \\
+\midrule
+\texttt{Vector2}   & a 2D point or direction: \texttt{\{float x, float y\}} \\
+\texttt{Rectangle} & \texttt{\{float x, float y, float width, float height\}}, $(x,y)$ is the top-left corner \\
+\texttt{Camera2D}  & where the camera looks, its zoom and rotation \\
+\texttt{Texture2D} & an image loaded onto the graphics card \\
+\texttt{Music}     & a streamed audio file (mp3, ogg, \dots) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The screen's $y$ axis points \emph{down}, so ``up'' on the screen is negative $y$.
+
+%======================================================================
+\section{\texttt{types.h}}
+
+\texttt{types.h} has no functions. It only defines constants, enums and structs that every other
+file uses, so all modules agree on what a ball, a wall or a hole looks like.
+
+\subsection{Include guard and constants}
+
+\code{types.h}{1}{10}
+
+\begin{description}
+  \item[Lines 1--2, 109.] This is an \emph{include guard}. The first time the compiler reads the file,
+  \texttt{TYPES\_H} is not defined, so it defines it and reads the rest. If another header includes
+  \texttt{types.h} again (for example \texttt{ball.h} and \texttt{level.h} both include it), \texttt{TYPES\_H}
+  is already defined and the whole file is skipped up to the \texttt{\#endif} on line 109. Without this,
+  every struct would be defined twice and the program would not compile.
+  \item[Line 4.] Includes raylib so that \texttt{Vector2}, \texttt{Rectangle} and \texttt{Camera2D} are known.
+  \item[Lines 7--10.] Maximum sizes. A hole can have at most 128 walls and 32 zones, and a course at most
+  18 holes. These are used as array sizes, so no dynamic memory (\texttt{malloc}) is needed.
+  \texttt{MAX\_OBSTACLES} is not used anywhere yet.
+\end{description}
+
+\subsection{\texttt{SurfaceType}}
+
+\code{types.h}{12}{24}
+
+An \texttt{enum} gives names to integers. The first name is 0 and each next one is one larger:
+
+\begin{center}
+\begin{tabular}{@{}clrl@{}}
+\toprule
+value & name & friction & behaviour (defined in \texttt{physics.c}) \\
+\midrule
+0 & \texttt{SURF\_GREEN}   & 400   & the default ground where there is no zone \\
+1 & \texttt{SURF\_FAIRWAY} & 300   & a little faster than green \\
+2 & \texttt{SURF\_SAND}    & 1400  & slows the ball a lot \\
+3 & \texttt{SURF\_ICE}     & 90    & very slippery \\
+4 & \texttt{SURF\_MUD}     & 2600  & strongest brake \\
+5 & \texttt{SURF\_WATER}   & --    & hazard: the ball is dropped and gets $+1$ stroke \\
+6 & \texttt{SURF\_BOOST}   & $-600$ & negative friction, so it speeds the ball up \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{description}
+  \item[Line 22.] \texttt{SURF\_COUNT} is a trick: because it comes last, its value is 7, which is exactly the
+  number of real surfaces. Arrays like \texttt{kfriction[SURF\_COUNT]} and loops like
+  \texttt{(zone\_type + 1) \% SURF\_COUNT} use it. If you add a new surface before it, the count updates itself.
+  \item The numbers in the table are what you write after \texttt{zone} in a level file.
+\end{description}
+
+\subsection{\texttt{BallState} and \texttt{GameStateId}}
+
+\code{types.h}{27}{46}
+
+\begin{description}
+  \item[Lines 28--35, \texttt{BallState}.] What the ball is doing right now:
+  \begin{itemize}
+    \item \texttt{BALL\_AIM} -- resting, the player may hit it;
+    \item \texttt{BALL\_CHARGE} -- declared, but the putter does not use it (the putter has its own phase);
+    \item \texttt{BALL\_ROLL} -- moving, physics runs every frame;
+    \item \texttt{BALL\_SUNK} -- in the cup, the hole is finished;
+    \item \texttt{BALL\_OOB} -- ``out of bounds'': in water or outside the field; it will be dropped.
+  \end{itemize}
+  \item[Lines 39--46, \texttt{GameStateId}.] The state of a round. \texttt{main.c} uses \texttt{GS\_PLAYING}
+  (hitting the ball), \texttt{GS\_HOLE\_DONE} (the short pause showing ``BIRDIE'' etc.) and
+  \texttt{GS\_SCOREBOARD} (after the last hole). \texttt{GS\_MENU} and \texttt{GS\_PAUSED} are not used: the
+  menu is controlled by a separate \texttt{ScreenState} in \texttt{main.c} (Section~\ref{sec:menu}).
+\end{description}
+
+\subsection{\texttt{Ball}}
+
+\code{types.h}{49}{58}
+
+\begin{description}
+  \item[Line 52.] \texttt{pos} -- the centre of the ball in world pixels.
+  \item[Line 53.] \texttt{vel} -- the velocity in pixels per second. Each frame the position moves by
+  \texttt{vel * dt}.
+  \item[Line 54.] \texttt{radius} -- set to 7 pixels in \texttt{BallInit}.
+  \item[Line 55.] \texttt{state} -- one of the \texttt{BallState} values above.
+  \item[Line 56.] \texttt{strokes} -- shots taken on this hole, including penalty strokes.
+  \item[Line 57.] \texttt{last\_safe\_pos} -- the last place the ball stopped normally. It is used as a fallback
+  drop position if a hole has no drop zone.
+\end{description}
+
+\subsection{\texttt{Wall} and \texttt{Zone}}
+
+\code{types.h}{61}{75}
+
+\begin{description}
+  \item[Line 64.] A wall is a solid rectangle.
+  \item[Line 65.] \texttt{bounce} is the \emph{restitution}: how much speed the ball keeps when it hits the wall.
+  0.72 keeps 72\,\%, 0.95 is almost a perfect bumper, 0 would stop the ball dead.
+  \item[Line 72.] A zone is a rectangle of ground \dots
+  \item[Line 73.] \dots with a surface type (sand, ice, \dots) \dots
+  \item[Line 74.] \dots and an optional wind. \texttt{wind} is an \emph{acceleration} in pixels per second$^2$.
+  \texttt{(0,-140)} pushes the ball upward a little more every frame while it is inside the zone.
+\end{description}
+
+\subsection{\texttt{Hole}}
+
+\code{types.h}{78}{95}
+
+\begin{description}
+  \item[Lines 81--82.] A fixed array of 128 walls plus a counter. Only the first \texttt{wall\_count} entries are
+  real walls, the rest are unused. This ``array + count'' pattern is how C stores a list whose length changes,
+  without \texttt{malloc}.
+  \item[Lines 84--85.] The same pattern for zones.
+  \item[Line 87.] \texttt{number} -- the hole number shown in the HUD.
+  \item[Line 88.] \texttt{par} -- how many strokes a good player needs.
+  \item[Lines 89--91.] Where the ball starts, where the cup is, and the cup's radius.
+  \item[Line 93.] \texttt{bounds} -- the whole playable field. If the ball's centre leaves it, the ball is out of bounds.
+  \item[Line 94.] \texttt{drop\_zone} -- after water or out of bounds, the ball is placed at the centre of this rectangle.
+\end{description}
+
+\subsection{\texttt{Game}}
+
+\code{types.h}{98}{109}
+
+This struct was planned to hold the whole game, but \texttt{main.c} does not use it. The real game state is the
+\texttt{GameApp} struct in \texttt{main.c} (Section~\ref{sec:gameapp}). Changing \texttt{Game} has no effect.
+
+%======================================================================
+\section{\texttt{input.h} and \texttt{input.c}}
+
+The input module is the only place where the mouse is read during play. Every frame it produces one
+\texttt{InputState} that the rest of the game uses.
+
+\subsection{\texttt{input.h}}
+
+\code{input.h}{1}{41}
+
+\begin{description}
+  \item[Lines 1--2, 41.] Include guard, as in \texttt{types.h}.
+  \item[Lines 9--23, \texttt{InputState}.] Everything that happened with the mouse \emph{this frame}:
+  \begin{itemize}
+    \item \texttt{aim\_direction}, \texttt{aim\_angle} -- which way the player is aiming, as a unit vector and as an
+    angle in radians;
+    \item \texttt{pointer\_world} -- the mouse position in world coordinates;
+    \item \texttt{pointer\_valid} -- \texttt{true} if the mouse is far enough from the ball to give a clean aim;
+    \item \texttt{charge\_pressed}, \texttt{charge\_held}, \texttt{charge\_released} -- the left button went down this
+    frame / is being held / came up this frame;
+    \item \texttt{cancel} -- a quick right-click happened (cancels a shot);
+    \item \texttt{confirm} -- a left click, used to skip the ``hole done'' pause;
+    \item \texttt{cam\_zoom\_delta} -- meant for mouse-wheel zoom (see the note in Section~\ref{sec:inputpoll}).
+  \end{itemize}
+  \item[Lines 25--31, \texttt{InputSystem}.] Values that must be \emph{remembered between frames}: the last good
+  aim angle and the timer and distance for the right button. One \texttt{InputSystem} lives inside \texttt{GameApp}
+  for the whole game, while a new \texttt{InputState} is made every frame.
+  \item[Lines 33--37.] The three functions the module offers.
+\end{description}
+
+\subsection{Constants, \texttt{DirFromAngle} and \texttt{InputInit}}
+
+\code{input.c}{1}{25}
+
+\begin{description}
+  \item[Lines 1--4.] \texttt{raymath.h} gives vector helpers like \texttt{Vector2Subtract}; \texttt{math.h} gives
+  \texttt{cosf}, \texttt{sinf}, \texttt{atan2f}.
+  \item[Line 7.] If the mouse is closer than 40 pixels to the ball, the aim is not updated (explained below).
+  \item[Lines 9--10.] A right-click counts as ``cancel'' only if it lasts less than 0.25 seconds and the mouse
+  moves less than 6 pixels.
+  \item[Line 12.] One notch of the mouse wheel would change the zoom by 0.1.
+  \item[Lines 16--18, \texttt{DirFromAngle}.] Turns an angle $\theta$ into the unit vector $(\cos\theta, \sin\theta)$.
+  Angle 0 points right, $\pi/2$ points down (because screen $y$ grows downward).
+  \item[Lines 20--25, \texttt{InputInit}.] Puts every remembered value to zero. The \texttt{->} operator
+  accesses a field through a pointer: \texttt{sys->aim\_angle} is the same as \texttt{(*sys).aim\_angle}.
+\end{description}
+
+\subsection{\texttt{InputPoll}}\label{sec:inputpoll}
+
+\code{input.c}{27}{70}
+
+\begin{description}
+  \item[Line 27.] The function receives the remembered state \texttt{sys}, the ball's position, the camera and the
+  frame time \texttt{dt}, and \emph{returns} a fresh \texttt{InputState} by value.
+  \item[Line 28.] \texttt{= \{0\}} sets every field to zero / \texttt{false}. So anything not set below is ``nothing
+  happened''.
+  \item[Line 30.] \texttt{GetMousePosition()} gives the mouse in window pixels. Because the camera can move and
+  zoom, that is not the same as world coordinates. \texttt{GetScreenToWorld2D} converts it using the camera.
+  \item[Line 33.] The vector from the ball to the mouse.
+  \item[Line 35.] If that vector is longer than 40 pixels \dots\ Comparing the \emph{squared} length with
+  $40^2 = 1600$ gives the same answer as comparing the length with 40, but avoids a slow square root.
+  \item[Line 36.] \dots\ the aim angle is updated. \texttt{atan2f(y, x)} returns the angle of the vector
+  $(x,y)$ in radians, in the range $(-\pi, \pi]$, and it handles every quadrant correctly.
+  \item[Lines 37--41.] Remember whether the pointer gave a valid aim. If the mouse is very close to the ball,
+  tiny movements would swing the angle wildly, so the old angle is kept instead.
+  \item[Lines 42--43.] Copy the (new or old) angle and its direction vector into the result.
+  \item[Lines 45--47.] raylib offers three different questions about a button, and the putter needs all three:
+  \texttt{IsMouseButtonPressed} is true only in the one frame the button goes down;
+  \texttt{IsMouseButtonDown} is true in every frame while it is held;
+  \texttt{IsMouseButtonReleased} is true only in the frame it comes up.
+  (\texttt{MOUSE\_LEFT\_BUTTON} and \texttt{MOUSE\_BUTTON\_LEFT} are two names for the same button.)
+  \item[Line 49.] \texttt{confirm} is also a left click, used when a hole is finished.
+  \item[Lines 51--55.] When the right button goes down: reset the timer and distance and remember that it is down.
+  \item[Lines 56--59.] While it stays down: add this frame's time to the timer, and store how far the mouse moved.
+  \item[Lines 61--64.] When it comes up: it was a ``cancel'' only if it was short \emph{and} the mouse stayed still.
+  This way a right-\emph{drag} (for example to move a camera later) does not cancel a shot.
+  \item[Line 65.] Stores the mouse wheel movement times 0.1.
+  \item[Line 68.] Return the filled \texttt{InputState}.
+\end{description}
+
+\paragraph{Two small bugs.}
+\begin{itemize}
+  \item \texttt{cam\_zoom\_delta} is declared \texttt{bool} (line 21 of \texttt{input.h}) but receives a
+  \texttt{float} on line 65. Any non-zero value becomes \texttt{true} (1), so the real amount is lost. It should be
+  declared \texttt{float}. Nothing uses it yet, so the game is not affected.
+  \item On line 58, \texttt{=} stores only the \emph{last frame's} mouse movement. To measure the whole drag it
+  should be \texttt{+=}.
+\end{itemize}
+
+%======================================================================
+\section{\texttt{level.h} and \texttt{level.c}}\label{sec:level}
+
+\subsection{\texttt{level.h}}
+
+\code{level.h}{1}{67}
+
+\begin{description}
+  \item[Lines 8--12, \texttt{Course}.] All holes of the game, how many were loaded, and which one is being played
+  (\texttt{current} starts at 0).
+  \item[Lines 15--21, \texttt{Edit\_Tool}.] The five tools of the map editor: draw a wall, draw a zone, place the tee,
+  place the cup, draw the drop zone.
+  \item[Lines 25--32, \texttt{Edtior}.] The editor's state (the name has a typo, ``Edtior'', but it is used
+  consistently so it works): current tool, which surface a new zone gets, whether the mouse is dragging and where
+  the drag started, the snapping grid size, and which wall is under the mouse.
+  \item[Lines 38--62.] The public functions. \texttt{save\_best\_scores}, \texttt{load\_best\_scores},
+  \texttt{surface\_from\_name} and \texttt{surface\_name} are declared but never written; that is fine as long as
+  nobody calls them.
+\end{description}
+
+\subsection{The level file format}
+
+Each hole is a text file \texttt{levels/holeNN.txt}. One command per line; \texttt{\#} starts a comment.
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+command & meaning \\
+\midrule
+\texttt{hole 7}                      & hole number \\
+\texttt{par 4}                       & par \\
+\texttt{bounds x y w h}              & the playable rectangle \\
+\texttt{tee x y}                     & start position \\
+\texttt{cup x y r}                   & cup centre and radius \\
+\texttt{drop x y w h}                & drop zone \\
+\texttt{wall x y w h [bounce]}       & a wall; \texttt{bounce} is optional (default 0.72) \\
+\texttt{zone t x y w h [wx wy]}      & a zone of surface number \texttt{t}; wind is optional \\
+\texttt{end}                         & ignored \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Example from \texttt{hole07.txt}:
+\begin{lstlisting}[numbers=none]
+tee 160 740
+cup 1420 200 16
+wall 420 24 40 520 0.8            # a canyon wall
+zone 3 460 400 420 240 0 -140     # ice with wind blowing up
+\end{lstlisting}
+
+\subsection{\texttt{AddZone}, \texttt{Validate\_hole}, \texttt{AddWall}}
+
+\code{level.c}{1}{42}
+
+\begin{description}
+  \item[Line 14--17, \texttt{AddZone}.] If the zone array is full, do nothing. Otherwise write the new zone into
+  position \texttt{zone\_count} and \emph{then} increase \texttt{zone\_count} (that is what the post-increment
+  \texttt{zone\_count++} does). The \texttt{(Zone)\{\dots\}} syntax is a \emph{compound literal}: it builds a whole
+  struct in one expression.
+  \item[Lines 21--31, \texttt{Validate\_hole}.] Checks a hole after loading. Two values are \emph{repaired}: a par
+  outside 1--9 becomes 3, and a cup radius under 4 becomes 14. Four problems \emph{reject} the hole: the field is
+  smaller than $100\times100$, the tee or the cup is outside the field (\texttt{CheckCollisionPointRec} tests whether a
+  point is inside a rectangle), or there are no walls at all. The \texttt{path} parameter is not used.
+  \item[Lines 34--42, \texttt{AddWall}.] Same idea as \texttt{AddZone}. Note the double brace \texttt{\{\{} on line 34
+  and the extra \texttt{\}} on line 42: the body is wrapped in an extra, useless block. It is legal C and changes
+  nothing, but one pair of braces can be removed.
+\end{description}
+
+\subsection{\texttt{Parseline}}
+
+\code{level.c}{44}{86}
+
+This function reads one line of a level file.
+
+\begin{description}
+  \item[Line 47.] Skip leading spaces by moving the \texttt{line} pointer forward.
+  \item[Line 48.] Ignore comment lines and empty lines.
+  \item[Lines 51--52.] Read the first word into \texttt{k}. \texttt{\%31s} reads at most 31 characters, so the
+  32-byte buffer (31 letters + the terminating \texttt{\textbackslash 0}) can never overflow. \texttt{sscanf}
+  returns how many values it read; if not 1, the line is ignored.
+  \item[Lines 54--85.] Compare the word with each command using \texttt{strcmp} (which returns 0 when two strings
+  are equal) and read the numbers that follow.
+  \item[The \texttt{\%*s} trick.] Each \texttt{sscanf} reads the \emph{whole line} again. \texttt{\%*s} means ``read
+  a word and throw it away'', so it skips the command name and the numbers go into the right variables.
+  \item[Lines 73--75.] Optional values: \texttt{b} is set to 0.72 \emph{before} \texttt{sscanf}. If the line has only
+  four numbers, \texttt{sscanf} stops early and \texttt{b} keeps 0.72.
+  \item[Lines 78--81.] The same for zones: wind defaults to $(0,0)$. The zone number is read as an \texttt{int} and
+  passed where a \texttt{SurfaceType} is expected; C converts an \texttt{int} to an enum automatically.
+  \item[Lines 83--85.] \texttt{end} is accepted and does nothing. Any unknown word falls through all the
+  \texttt{if}s and is silently ignored.
+\end{description}
+
+\subsection{\texttt{LoadHoleFromFile}}
+
+\code{level.c}{88}{113}
+
+\begin{description}
+  \item[Line 89.] If the file does not exist, fail.
+  \item[Line 91.] \texttt{LoadFileText} (raylib) reads the whole file into one string in memory.
+  \item[Line 94.] \texttt{*h = (Hole)\{0\};} clears every field of the hole, so no walls or zones from a previous map
+  are left behind.
+  \item[Lines 97--99.] Default values in case the file does not set them.
+  \item[Line 102.] \texttt{strtok} cuts a string into pieces. The first call gets the text and the separators
+  (\texttt{\textbackslash r} and \texttt{\textbackslash n}, so both Windows and Mac/Linux line endings work) and
+  returns the first line.
+  \item[Lines 104--108.] Each later call with \texttt{NULL} continues where the last one stopped and returns the next
+  line, until it returns \texttt{NULL} at the end. Each line goes to \texttt{Parseline}.
+  \item[Line 109.] Free the memory that \texttt{LoadFileText} allocated.
+  \item[Line 111.] Return whether the hole is valid.
+\end{description}
+
+\subsection{\texttt{SaveHoleToFile}}
+
+\code{level.c}{117}{124}
+
+Not written yet. It always returns \texttt{false}, and \texttt{buf} and \texttt{n} are unused. It is meant to write a
+hole back to a text file for the editor.
+
+\subsection{The course}
+
+\code{level.c}{127}{150}
+
+\begin{description}
+  \item[Lines 127--139, \texttt{course\_load}.] Tries \texttt{levels/hole01.txt}, \texttt{hole02.txt}, \dots
+  \texttt{TextFormat} works like \texttt{sprintf}; \texttt{\%02d} prints the number with at least two digits and a
+  leading zero (1 $\to$ \texttt{01}).
+  \begin{itemize}
+    \item Line 133: the loop \emph{stops} at the first missing file, so hole numbers must not have gaps.
+    \item Line 135: a file that fails validation is skipped, but loading continues with the next number.
+    Valid holes are stored one after another, so \texttt{holes[0]}, \texttt{holes[1]}, \dots\ are always filled.
+    \item The loop runs for \texttt{i = 1 \dots\ 17}, so at most 17 files are tried.
+  \end{itemize}
+  \item[Lines 141--145, \texttt{course\_advance}.] Go to the next hole. Returns \texttt{false} if the current hole was the
+  last one, which tells \texttt{main.c} to show the scoreboard.
+  \item[Lines 147--150, \texttt{course\_current}.] Returns a \emph{pointer} to the current hole, so the caller works
+  on the real hole and not a copy. If \texttt{current} is somehow out of range, it safely returns hole 0.
+\end{description}
+
+\subsection{Scoring}
+
+\code{level.c}{153}{189}
+
+\begin{description}
+  \item[Lines 155--168, \texttt{score\_name}.] One stroke is always ``HOLE IN ONE!!!''. Otherwise
+  \texttt{strokes - par} picks the name: $-3$ albatross, $-2$ eagle, $-1$ birdie, 0 par, $+1$ bogey, $+2$ double bogey,
+  $+3$ triple bogey. The \texttt{default} case handles everything else: better than $-3$ gives ``GREAT'', worse than
+  $+3$ gives the insult. (\texttt{case - 3} with a space is simply the number $-3$.)
+  \item[Lines 171--179, \texttt{Course\_total}.] Adds up all scores. A score of 0 means ``not played yet'' and is
+  skipped.
+  \item[Lines 182--189, \texttt{course\_to\_par}.] Adds up \texttt{score - par} for played holes. A result of $-2$ means
+  two under par for the round so far.
+\end{description}
+
+\subsection{The editor}
+
+\code{level.c}{195}{246}
+
+\begin{description}
+  \item[Lines 197--203, \texttt{EditorInit}.] Start with the wall tool, sand as the zone surface, a 10-pixel grid and
+  nothing selected ($-1$ means ``no wall'').
+  \item[Lines 205--208, \texttt{Snap2Grid}.] Rounds a point to the nearest grid line. With a grid of 10,
+  $x = 347$ becomes $\operatorname{round}(34.7)\cdot 10 = 350$. A grid of 1 means no snapping.
+  \item[Lines 210--214, \texttt{RectFromCorners}.] The user may drag in any direction. \texttt{fminf} takes the
+  smaller coordinates as the top-left corner and \texttt{fabsf} (absolute value) gives a positive width and height.
+  \item[Lines 217--223, \texttt{RemoveWall}.] Deletes wall number \texttt{index} by shifting every later wall one place
+  to the left, then reducing the count. Not called anywhere yet.
+  \item[Lines 225--230, \texttt{WallAtPoint}.] Finds the wall under a point. It searches from the \emph{last} wall
+  backwards, so if walls overlap, the one drawn on top is found first. Returns $-1$ if there is none.
+  \item[Lines 233--234.] A global copy of one hole, used for a one-step undo.
+  \item[Lines 236--239, \texttt{PushUndo}.] Saves a copy of the hole before a change.
+  \item[Lines 241--246, \texttt{PopUndo}.] Swaps the current hole with the saved copy. Because it swaps (using
+  \texttt{temporary}), calling it twice is a redo. Not called anywhere yet.
+\end{description}
+
+\code{level.c}{248}{313}
+
+\begin{description}
+  \item[Line 249.] The mouse position snapped to the grid.
+  \item[Line 250.] Remember which wall is under the mouse (for highlighting).
+  \item[Lines 254--258.] Keys 1--5 choose the tool.
+  \item[Lines 262--264.] \texttt{Tab} cycles the zone surface: $0 \to 1 \to \dots \to 6 \to 0$. The \texttt{\%}
+  (remainder) operator makes it wrap around, and \texttt{SURF\_COUNT} is why it wraps at the right number.
+  \item[Lines 267--272.] \texttt{G} cycles the grid: $1 \to 5 \to 10 \to 20 \to 1$.
+  \item[Lines 275--279.] When the left button goes down: save an undo copy and remember where the drag started.
+  \item[Lines 281--283.] When it comes up: build the rectangle between the start and the current point.
+  \item[Lines 285--307.] Use it according to the tool. Tee and cup use only the release point. Walls, zones and the
+  drop zone need a rectangle at least $4\times4$ pixels, so a plain click does not create an invisible object.
+\end{description}
+
+\paragraph{Status.} \texttt{main.c} calls \texttt{EditorInit} but never calls \texttt{editor\_update}, so the
+editor is not active in the game yet, even though the HUD mentions ``F1 editor''.
+
+%======================================================================
+\section{\texttt{putter.h} and \texttt{putter\_simple.c}}
+
+\subsection{\texttt{putter.h}}
+
+\code{putter.h}{1}{41}
+
+\begin{description}
+  \item[Lines 16--22, \texttt{PutterPhase}.] The phases of a swing. The simple putter uses only
+  \texttt{putter\_idle} (waiting) and \texttt{putter\_backswing} (charging power). \texttt{strike},
+  \texttt{follow} and \texttt{recover} were for the animated club in \texttt{unused/putter\_anim.c}.
+  \item[Lines 24--33, \texttt{Putter}.]
+  \begin{itemize}
+    \item \texttt{phase} -- the current phase;
+    \item \texttt{t}, \texttt{offset} -- only used by the animated version;
+    \item \texttt{power} -- the power bar, from 0 to 1;
+    \item \texttt{launch\_power} -- the power actually used for the last shot;
+    \item \texttt{aim\_angle} -- a copy of the input aim;
+    \item \texttt{dir} -- $+1$ while the bar fills, $-1$ while it empties;
+    \item \texttt{fired} -- \texttt{true} in the frame a shot was taken.
+  \end{itemize}
+  \item[Lines 35--39.] The functions. Parameters marked \texttt{const} are only read, never changed.
+\end{description}
+
+\subsection{\texttt{putter\_simple.c}}
+
+\code{putter_simple.c}{1}{24}
+
+\begin{description}
+  \item[Line 7.] Filling the bar from 0 to 1 takes 1.15 seconds.
+  \item[Line 8.] The weakest possible shot is 5\,\% power, so a very quick click still moves the ball.
+  \item[Lines 11--16, \texttt{putter\_init}.] Start idle with everything at zero. Line 13 is a chained assignment:
+  it is read from right to left, so all five fields become 0.
+  \item[Lines 18--20.] The putter is ``charging'' exactly when it is in the backswing. The HUD calls this to decide
+  whether to draw the power bar.
+  \item[Lines 22--24.] A simple getter for the current power.
+\end{description}
+
+\code{putter_simple.c}{26}{69}
+
+\begin{description}
+  \item[Line 27.] Always follow the player's aim.
+  \item[Line 29.] The ball can only be hit when it is resting.
+  \item[Lines 31--41, idle phase.] Keep the power at zero. If the ball is resting and the left button was
+  \emph{just pressed}, switch to the backswing with the bar filling. \texttt{return} ends the function here, so the
+  charging code below does not run in the same frame.
+  \item[Lines 44--48, charging.] While the button is held, change the power by
+  $\texttt{dir}\cdot dt / 1.15$. At 60 FPS, $dt \approx 0.0167$\,s, so the power grows by about 0.0145 per frame.
+  When it passes 1 it is clamped to 1 and \texttt{dir} flips to $-1$; when it drops below 0 it flips back.
+  So the bar goes up and down like a ping-pong ball until the player lets go.
+  \item[Lines 50--54, cancel.] A quick right-click throws the charge away and returns to idle.
+  \item[Lines 56--62, firing.] When the left button is released:
+  \begin{itemize}
+    \item line 57: use the current power, but at least \texttt{MIN\_POWER} (the \texttt{? :} is the conditional
+    operator: \texttt{a ? b : c} means ``if \texttt{a} then \texttt{b} else \texttt{c}'');
+    \item line 59: \texttt{BallLaunch} in \texttt{ball.c} sets the ball's velocity to
+    \[ \vec v = (\cos\theta,\ \sin\theta)\cdot \texttt{power}\cdot 1300\ \text{px/s}, \]
+    switches the ball to \texttt{BALL\_ROLL} and adds one stroke;
+    \item lines 60--61: reset the bar and go back to idle.
+  \end{itemize}
+  \item[Lines 65--69, \texttt{putter\_draw}.] Draws nothing (there is no club picture). \texttt{(void)p;} tells the
+  compiler ``I know this parameter is unused'', which removes a warning.
+\end{description}
+
+\paragraph{Example.} Holding for 0.575\,s gives power $0.575/1.15 = 0.5$, so the ball starts at 650\,px/s.
+Holding for 1.6\,s: the bar reached 1 at 1.15\,s and has been falling for 0.45\,s, so power $= 1 - 0.45/1.15
+\approx 0.61$.
+
+\paragraph{How far does it roll?} With constant friction $a$, a ball starting at speed $v$ stops after
+$d = v^2/(2a)$. A full shot on the fairway ($a=300$) rolls $1300^2/600 \approx 2800$\,px; on mud ($a=2600$) only
+about 325\,px.
+
+%======================================================================
+\section{The menu in \texttt{main.c}}\label{sec:menu}
+
+\subsection{\texttt{ScreenState}}
+
+\code{main.c}{1}{22}
+
+\begin{description}
+  \item[Lines 1--10.] \texttt{main.c} includes every module because it connects them all.
+  \item[Line 13.] A hole ends automatically after \texttt{par + 5} strokes.
+  \item[Line 14.] The ``BIRDIE!'' message stays for 1.6 seconds.
+  \item[Lines 17--22.] Which screen is on: the main menu, the game, the tutorial picture or the about picture. This is
+  the top-level state; \texttt{GameStateId} (from \texttt{types.h}) only matters when the screen is
+  \texttt{SCREEN\_GAME}.
+\end{description}
+
+\subsection{\texttt{GameApp}}\label{sec:gameapp}
+
+\code{main.c}{25}{47}
+
+\begin{description}
+  \item[Lines 26--36.] Game data: round state, the course, the ball, the putter, the input memory, the editor, the
+  camera, the score of each hole, the best score of each hole, the timer for the ``hole done'' pause, and
+  \texttt{prev\_speed} (not used yet).
+  \item[Lines 39--46.] Menu data: the current screen, three pictures for the menu, tutorial and about screens, the
+  wind animation, the two music tracks, and whether sound is muted.
+\end{description}
+
+\subsection{\texttt{DrawFullscreenTexture}}
+
+\code{main.c}{50}{56}
+
+\texttt{DrawTexturePro} copies the \texttt{source} rectangle of the picture (here the whole picture) into the
+\texttt{destination} rectangle on screen (here the whole window). If the sizes differ, the image is stretched, so
+the background always fills the window, even after resizing. \texttt{origin} is the rotation point and
+\texttt{0.0f} is the rotation angle. \texttt{WHITE} as the tint means ``draw the original colours''.
+
+\subsection{\texttt{DrawMenuButton}}
+
+\code{main.c}{59}{76}
+
+\begin{description}
+  \item[Lines 61--62.] Is the mouse over the button? (Menu buttons use screen coordinates, so no camera conversion is
+  needed.)
+  \item[Lines 64--66.] A lighter green when hovered, a darker green otherwise. The fourth number in a \texttt{Color} is
+  alpha (opacity, 0--255).
+  \item[Lines 68--69.] Draw the rounded button and its light outline. \texttt{0.20f} is the roundness and \texttt{10}
+  the number of segments used to draw each corner.
+  \item[Lines 71--73.] Centre the text: \texttt{MeasureText} gives the text width in pixels, so the text starts at
+  $\text{centre} - \text{width}/2$. Vertically it starts half a font size above the centre.
+  \item[Lines 74--75.] Return \texttt{true} only in the frame the button is clicked.
+\end{description}
+
+This style is called an \emph{immediate-mode} GUI: there are no button objects stored anywhere. Each frame the
+function is called again, draws the button and answers ``was I clicked right now?''. To add a button you just add one
+more call.
+
+\subsection{\texttt{StartHole}}
+
+\code{main.c}{79}{86}
+
+Used when a new hole begins: put the ball on the tee (\texttt{BallInit} also resets the stroke count to 0), reset the
+putter, restart the hole timer, jump the camera to the ball, and go back to \texttt{GS\_PLAYING}.
+
+\subsection{Music functions}
+
+\code{main.c}{89}{115}
+
+\begin{description}
+  \item[Lines 89--93, \texttt{StartGameMusic}.] Stop the menu song and play the game song, unless muted.
+  \item[Lines 96--100, \texttt{StartMenuMusic}.] The opposite.
+  \item[Lines 103--115, \texttt{ToggleMute}.] Flip \texttt{muted} with \texttt{!}, then set both volumes to 0 or back to
+  normal. The music keeps playing silently, so un-muting continues the song instead of restarting it.
+\end{description}
+
+\subsection{\texttt{GameInit}}
+
+\code{main.c}{118}{147}
+
+\begin{description}
+  \item[Line 120.] Clear the whole struct.
+  \item[Line 122.] Load all holes from the \texttt{levels} folder.
+  \item[Lines 126--131.] Initialise each module and set the round state to playing.
+  \item[Line 132.] The game starts on the \textbf{main menu}, not in play.
+  \item[Lines 135--141.] Load the pictures, the wind animation and the two songs. Line 139 makes the wind sprite use smooth (bilinear) scaling. The paths are relative to the folder the program is
+  \emph{started from}, so run it from the project folder (\texttt{make run} or \texttt{./golf}). A file must also really
+  be the format its name says: a JPEG renamed to \texttt{.png} will not load.
+  \item[Lines 142--145.] Both songs loop, with the menu slightly louder.
+  \item[Line 146.] Start the menu music.
+\end{description}
+
+\subsection{\texttt{DrawMainMenu}}
+
+\code{main.c}{150}{178}
+
+\begin{description}
+  \item[Line 152.] The background picture fills the window.
+  \item[Line 153.] A black rectangle with alpha 70 (about 27\,\% opaque) over the whole window darkens the picture so
+  the white text is easier to read.
+  \item[Lines 154--157.] The title ``MINI GOLF'' in size 70, centred horizontally, 80 pixels from the top.
+  \item[Lines 158--165.] Five buttons, $260\times60$ pixels, all centred horizontally, with their tops at
+  $y = 220, 300, 380, 460, 540$ (80 pixels apart). \texttt{centerX} is recomputed every frame, so the buttons stay
+  centred when the window is resized.
+  \item[Lines 166--169, PLAY.] Switch to the game screen and the game music.
+  \item[Lines 170--171.] TUTORIAL and ABOUT US switch screens.
+  \item[Lines 172--175, SOUND.] The label is chosen from \texttt{muted} each frame, so it always shows the current
+  setting. Clicking it calls \texttt{ToggleMute}.
+  \item[Line 176, EXIT.] Returns \texttt{true}; \texttt{main} uses this to end the loop.
+  \item[Line 177.] Otherwise return \texttt{false}: keep running.
+\end{description}
+
+\subsection{Tutorial and About screens}
+
+\code{main.c}{181}{194}
+
+Each screen shows one full-window picture and a BACK button in the top-left corner (at $x=30$, $y=30$,
+$160\times55$ pixels). Clicking BACK returns to the main menu.
+
+\subsection{The main loop: choosing the screen}
+
+\code{main.c}{197}{246}
+
+\begin{description}
+  \item[Line 199.] Ask for 4$\times$ anti-aliasing (smoother edges) and a resizable window.
+  \item[Lines 202--203.] Open the window and the audio device. Audio must be started before any music is loaded.
+  \item[Line 204.] By default raylib closes the window when \texttt{Esc} is pressed. \texttt{SetExitKey(KEY\_NULL)}
+  turns that off, so \texttt{Esc} can be used for ``back to menu''.
+  \item[Line 205.] Run at 60 frames per second.
+  \item[Lines 207--209.] Create and initialise the game. \texttt{shouldQuit} becomes \texttt{true} when EXIT is clicked.
+  \item[Line 212.] Keep looping until the window's close button is pressed or EXIT is clicked.
+  \item[Lines 213--214.] Frame time, clamped to 0.05\,s so that one slow frame cannot move the ball too far.
+  \item[Lines 215--216.] raylib streams music in small pieces. \texttt{UpdateMusicStream} must be called every frame
+  for each song, otherwise the music stutters and stops.
+  \item[Lines 217--223, main menu.] Draw the menu. \texttt{continue} jumps straight to the next loop iteration, so none
+  of the game code below runs while the menu is open. The game is frozen, and PLAY resumes it exactly where it was.
+  \item[Lines 224--239.] The tutorial and about screens work the same way; \texttt{Esc} also goes back to the menu.
+  \item[Lines 240--246.] From here on the screen is \texttt{SCREEN\_GAME}. The input is read, and \texttt{Esc} returns
+  to the menu and switches back to the menu music.
+\end{description}
+
+The screens and how you move between them:
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+from & action & to \\
+\midrule
+main menu & PLAY          & game \\
+main menu & TUTORIAL      & tutorial \\
+main menu & ABOUT US      & about \\
+main menu & EXIT          & program ends \\
+tutorial / about & BACK or \texttt{Esc} & main menu \\
+game      & \texttt{Esc}  & main menu \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Cleaning up}
+
+\code{main.c}{309}{322}
+
+After the loop ends, the music is stopped, every song and picture is unloaded from memory, and the audio device
+and window are closed. Every \texttt{Load\dots} call has a matching \texttt{Unload\dots} call.
+
+\end{document}

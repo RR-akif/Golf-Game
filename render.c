@@ -142,7 +142,65 @@ void DrawCourse(const Hole *h)
     DrawCircleV(h->cup_pos, h->cup_radius + 2.0f,ColorBrightness(GRASS_BASE, -0.30f)); //drawing outer rim around the main hole with a radius of 2 pixel larger
     DrawCircleV(h->cup_pos, h->cup_radius, (Color){ 18, 18, 20, 255 }); //main hole
     DrawCircleV((Vector2){ h->cup_pos.x, h->cup_pos.y + 2.0f },h->cup_radius * 0.72f, (Color){ 34, 34, 38, 255 }); //This is comparatively a smaller circle drawn slightly below the main hole(h->cup_pos+2) in order create a depth effect of the circle. Hence the hole appears to go downward
-    //Three circles = outer rim + main hole + holes depth effect     
+    //Three circles = outer rim + main hole + holes depth effect
+}
+
+//Drawing animated wind gusts inside every zone that has wind
+//The sprite sheet is one row of square frames, the gust drawn in each frame blows to the right
+void DrawWindZones(const Hole *h,Texture2D sprite,float t)
+{
+    if(sprite.id==0) return; //texture failed to load, just skip the effect
+
+    int frames=sprite.width/sprite.height; //each frame is a square, so width/height gives the frame count
+    if(frames<2) return;
+    int used=frames-1; //the last frame is empty (the gust has faded out), skipping it avoids a blink
+    float fs=(float)sprite.height; //frame size in the texture
+
+    for(int i=0;i<h->zone_count;i++)
+    {
+        const Zone *z=&h->zones[i];
+        float strength=Vector2Length(z->wind);
+        if(strength<1.0) continue; //no wind here
+
+        Vector2 d=Vector2Scale(z->wind,1.0/strength); //unit vector along the wind
+        Vector2 p={-d.y,d.x}; //unit vector across the wind
+        Vector2 c={z->area.x+z->area.width*0.5,z->area.y+z->area.height*0.5}; //center of the zone
+
+        //half size of the zone measured along and across the wind
+        float along=fabsf(d.x)*z->area.width*0.5+fabsf(d.y)*z->area.height*0.5;
+        float across=fabsf(p.x)*z->area.width*0.5+fabsf(p.y)*z->area.height*0.5;
+
+        float size=fminf(130.0,fmaxf(50.0,across*1.2)); //size of one gust on screen
+        int lanes=(int)(2.0*across/(size*0.8)); //rows of gusts across the zone
+        if(lanes<1) lanes=1;
+        int per_lane=(int)(2.0*along/(size*1.5)); //gusts following each other in one row
+        if(per_lane<1) per_lane=1;
+
+        float travel=fmaxf(2.0*along-size,1.0); //distance a gust drifts from one end of the zone to the other
+        float speed=strength*0.6; //stronger wind, faster gusts
+        float angle=atan2f(d.y,d.x)*RAD2DEG;
+
+        for(int l=0;l<lanes;l++)
+        {
+            float off=(lanes==1) ? 0.0 : -across+size*0.5+l*(2.0*across-size)/(lanes-1); //lane position across the wind
+
+            for(int k=0;k<per_lane;k++)
+            {
+                float u=(float)k/per_lane+t*speed/travel+l*0.37; //0..1 progress through the zone, lanes are offset so they don't move in lockstep
+                u=u-floorf(u);
+
+                float a=sinf(u*PI); //fade in at the start, fade out at the end
+                Vector2 pos=Vector2Add(c,Vector2Add(Vector2Scale(d,-travel*0.5+u*travel),Vector2Scale(p,off)));
+
+                int frame=((int)(t*10.0)+k*3+l*5)%used; //10 frames per second, each gust starts on a different frame
+                Rectangle src={frame*fs,0,fs,fs};
+                Rectangle dst={pos.x,pos.y,size,size};
+                Rectangle shadow={pos.x+3,pos.y+4,size,size}; //dark copy slightly offset, so white gusts still show on ice
+                DrawTexturePro(sprite,src,shadow,(Vector2){size*0.5,size*0.5},angle,Fade((Color){20,50,70,255},0.45*a));
+                DrawTexturePro(sprite,src,dst,(Vector2){size*0.5,size*0.5},angle,Fade(WHITE,0.85*a));
+            }
+        }
+    }
 }
 
 //Drawing the walls or rails: shadow(depth effect) + bottom dark base + main body + top light strip

@@ -1,0 +1,9 @@
+# Fdb version 4
+["pdflatex"] 0 "code_guide.tex" "code_guide.pdf" "code_guide" 0 -1
+  "code_guide.aux" 0 -1 0 "pdflatex"
+  "code_guide.tex" 0 -1 0 ""
+  (generated)
+  "code_guide.aux"
+  "code_guide.log"
+  "code_guide.pdf"
+  (rewritten before read)

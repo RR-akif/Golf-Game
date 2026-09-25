@@ -16,6 +16,7 @@ void RenderInit(RenderState *r, Vector2 ball_pos);
 void RenderUpdateCamera(RenderState *r, const Ball *b, const Hole *h,const Putter *p, float dt);
                         
 void DrawCourse(const Hole *h);
+void DrawWindZones(const Hole *h, Texture2D sprite, float t);
 void DrawBall(const Ball *b);
 void DrawRails(const Hole *h);
 void DrawAimGuide(const Ball *b, const Hole *h, float angle, float power);
