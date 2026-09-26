@@ -1,3 +1,5 @@
+#include<stdio.h>
+
 #include "raylib.h"
 #include "raymath.h"
 
@@ -32,6 +34,8 @@ typedef struct {
     RenderState render;
     int scores[MAX_HOLES];
     int best[MAX_HOLES];
+    int bestCourseScore; //to show best score after the entire game (course - total combination of 12 holes)
+    bool newBestScore;
     float hole_done_t;
     float prev_speed;
     
@@ -52,6 +56,18 @@ typedef struct {
 } GameApp;
 
 
+// Function prototypes
+int LoadBestScore(void);
+void SaveBestScore(int score);
+void CheckFinalScore(GameApp *g);
+void RestartGame(GameApp *g);
+void ResetGameProgress(GameApp *g);
+int DrawFinalScoreScreen(GameApp *g);
+void StartHole(GameApp *g);
+void StartGameMusic(GameApp *g);
+void StartMenuMusic(GameApp *g);
+
+
 void DrawFullscreenTexture(Texture2D texture)
 {
     Rectangle source = {0,0,(float)texture.width,(float)texture.height};
@@ -63,19 +79,19 @@ void DrawFullscreenTexture(Texture2D texture)
 
 bool DrawMenuButton(Rectangle rect,const char *text)
 {
-    Vector2 mouse = GetMousePosition();
-    bool hovered = CheckCollisionPointRec(mouse,rect); //detecting whether the mouse is at the position of the rectangle or it is colliding with the rectangle
+    Vector2 mouse=GetMousePosition();
+    bool hovered=CheckCollisionPointRec(mouse,rect); //detecting whether the mouse is at the position of the rectangle or it is colliding with the rectangle
 
     Color buttonColor;
-    if (hovered) buttonColor = (Color){70,120,70,230};
-    else buttonColor = (Color){30,50,30,210};
+    if (hovered) buttonColor=(Color){70,120,70,230};
+    else buttonColor=(Color){30,50,30,210};
 
     DrawRectangleRounded(rect,0.20f,10,buttonColor);
     DrawRectangleRoundedLines(rect,0.20f,10,(Color){220,220,180,255});
 
-    int fontSize = 30;
-    int textWidth = MeasureText(text,fontSize); //Returns the width of the text in pixel
-    DrawText(text,(int)(rect.x + rect.width/2 - textWidth/2),(int)(rect.y + rect.height/2 - fontSize/2),fontSize,WHITE); //Treating the fontsize as the text height. Drawing the text at the middle of the rectangle
+    int fontSize=30;
+    int textWidth=MeasureText(text,fontSize); //Returns the width of the text in pixel
+    DrawText(text,(int)(rect.x + rect.width/2 - textWidth/2),(int)(rect.y + rect.height/2-fontSize/2),fontSize,WHITE); //Treating the fontsize as the text height. Drawing the text at the middle of the rectangle
 
     if (hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) return true;
     return false;
@@ -120,14 +136,147 @@ void ToggleMute(GameApp *g)
     }
 }
 
+#define BEST_SCORE_FILE "best_score.txt"
+
+int LoadBestScore(void)
+{
+    FILE *file=fopen(BEST_SCORE_FILE,"r");
+    if(file==NULL)
+    {
+        return -1;
+    }
+    int bestScore = -1;
+    if(fscanf(file,"%d",&bestScore)!=1)
+    {
+        bestScore=-1;
+    }
+    fclose(file);
+    return bestScore;
+}
+
+void SaveBestScore(int score)
+{
+    FILE*file =fopen(BEST_SCORE_FILE,"w");
+    if(file==NULL)
+    {
+        TraceLog(LOG_WARNING,"Could not save best score");
+        return;
+    }
+    fprintf(file,"%d",score);
+    fclose(file);
+}
+
+
+void CheckFinalScore(GameApp *g)
+{
+    int ownScore = Course_total(g->scores,g->course.hole_count);
+    g->newBestScore = false;
+
+    if(g->bestCourseScore<0)
+    {
+        g->bestCourseScore=ownScore;
+        g->newBestScore=true;
+        SaveBestScore(g->bestCourseScore);
+    }
+    else if(ownScore<g->bestCourseScore)
+    {
+        g->bestCourseScore=ownScore;
+        g->newBestScore=true;
+        SaveBestScore(g->bestCourseScore);
+    }
+}
+
+void RestartGame(GameApp *g)
+{
+    g->course.current=0;
+    for(int i=0;i<MAX_HOLES;i++)
+    {
+        g->scores[i]=0;
+    }
+    g->newBestScore=false;
+    StartHole(g);
+}
+
+void ResetGameProgress(GameApp *g)
+{
+    g->course.current=0;
+    for(int i=0;i<MAX_HOLES;i++)
+    {
+        g->scores[i]=0;
+    }
+    g->newBestScore=false;
+    BallInit(&g->ball,course_current(&g->course)->tee_pos);
+    putter_init(&g->putter);
+    g->state=GS_PLAYING;
+}
+
+
+int DrawFinalScoreScreen(GameApp *g)
+{
+    int sw=GetScreenWidth();
+    int sh=GetScreenHeight();
+
+    int ownScore=Course_total(g->scores,g->course.hole_count);
+
+    ClearBackground((Color){10,18,14,255});
+    DrawRectangleGradientV(0,0,sw,sh,(Color){18,42,30,255},(Color){5,12,10,255});
+    if(g->newBestScore)
+    {
+        const char *title="CONGRATULATIONS!";
+        int titleSize = 52;
+        DrawText(title,sw/2-MeasureText(title,titleSize)/2,100,titleSize,GOLD);
+        const char *message="You made the best score!";
+        DrawText(message,sw/2-MeasureText(message,30)/2,175,30,RAYWHITE);
+    }
+    else
+    {
+        const char *title="COURSE COMPLETE";
+        DrawText(title,sw/2-MeasureText(title,52)/2,110,52,RAYWHITE);
+    }
+    char ownText[64];
+    char bestText[64];
+    snprintf(ownText,sizeof(ownText),"Your Score: %d",ownScore);
+    snprintf(bestText,sizeof(bestText),"Best Score: %d",g->bestCourseScore);
+    DrawText(ownText,sw/2-MeasureText(ownText,34)/2,250,34,RAYWHITE);
+    DrawText(bestText,sw/2-MeasureText(bestText,34)/2,300,34,RAYWHITE);
+    float buttonWidth=220.0f;
+    float buttonHeight=60.0f;
+
+    float gap=30.0f;
+    float totalWidth =buttonWidth * 3 + gap * 2;
+    float startX=sw/2.0f - totalWidth/2.0f;
+    float buttonY=420.0f;
+
+    Rectangle menuButton={startX,buttonY,buttonWidth,buttonHeight};
+    Rectangle restartButton = {startX+buttonWidth+gap,buttonY,buttonWidth,buttonHeight};
+    Rectangle exitButton = {startX + (buttonWidth + gap) * 2,buttonY,buttonWidth,buttonHeight};
+
+    if(DrawMenuButton(menuButton,"MENU"))
+    {
+        ResetGameProgress(g);
+        g->screen=SCREEN_MAIN_MENU;
+        StartMenuMusic(g);
+    }
+    if(DrawMenuButton(restartButton,"RESTART"))
+    {
+        RestartGame(g);
+    }
+    if(DrawMenuButton(exitButton,"EXIT"))
+    {
+        return 1;
+    }
+    return 0;
+}
+
 
 void GameInit(GameApp *g)
 {
     *g = (GameApp){0};
-
     course_load(&g->course,"levels");
-
     for (int i = 0;i < MAX_HOLES;i++) g->scores[i] = 0;
+
+    g->bestCourseScore=LoadBestScore();
+    g->newBestScore = false;
 
     InputInit(&g->input_sys);
     EditorInit(&g->editor);
@@ -141,7 +290,7 @@ void GameInit(GameApp *g)
 
     g->menuBackground = LoadTexture("menu.png");
     g->tutorialImage = LoadTexture("tutorials.png");
-    g->aboutImage = LoadTexture("GolfGameCredit.png");
+    g->aboutImage = LoadTexture("Credits.png");
     g->windSprite = LoadTexture("wind_sprite.png");
     SetTextureFilter(g->windSprite,TEXTURE_FILTER_BILINEAR);
     g->menuMusic = LoadMusicStream("golfmenu.mp3");
@@ -223,7 +372,6 @@ int main(void)
 {
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE);
 
-
     InitWindow(1280,720,"Mini Golf By Akif Rafin");
     SetExitKey(KEY_NULL); //Normally esc is assumed as exit key, so if we press exit at any time then it gets out of the game . But we want if esc is pressed then , it should return to our game menu, so exit key is set to be null.
     InitAudioDevice();
@@ -265,7 +413,6 @@ int main(void)
             EndDrawing();
             continue;
         }
-
 
         Hole *hole = course_current(&game.course);
         InputState in = InputPoll(&game.input_sys,game.ball.pos,game.render.cam,dt);
@@ -326,26 +473,36 @@ int main(void)
 
         case GS_HOLE_DONE:
             game.hole_done_t += dt;
-            if (game.hole_done_t >= HOLE_DONE_PAUSE || in.confirm) {
-            if (course_advance(&game.course)) StartHole(&game);
-            else game.state = GS_SCOREBOARD;
+            if (game.hole_done_t>=HOLE_DONE_PAUSE || in.confirm) {
+                if (course_advance(&game.course)) StartHole(&game);
+                else
+                {
+                    CheckFinalScore(&game);
+                    game.state = GS_SCOREBOARD;
+                } 
             }
             break;
 
         case GS_SCOREBOARD:
-            if (in.confirm) {
-            game.course.current = 0;
-            for (int i = 0;i < MAX_HOLES;i++) game.scores[i] = 0;
-            StartHole(&game);
-            }
             break;
 
         default:
             break;
         }
 
-        RenderUpdateCamera(&game.render,&game.ball,hole,&game.putter,dt);
+        if(game.state == GS_SCOREBOARD)
+        {
+            BeginDrawing();
+            ClearBackground(BLACK);
+            if(DrawFinalScoreScreen(&game))
+            {
+                shouldQuit=true;
+            }
+            EndDrawing();
+            continue;
+        }
 
+        RenderUpdateCamera(&game.render,&game.ball,hole,&game.putter,dt);
 
         BeginDrawing();
         ClearBackground((Color){92,92,56,255});
