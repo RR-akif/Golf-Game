@@ -2,8 +2,6 @@
 #include "ball.h"
 
 
-
-
 #define CHARGE_TIME 1.15f
 #define MIN_POWER 0.05f
 
