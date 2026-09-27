@@ -94,12 +94,12 @@ Color SurfaceColor(SurfaceType s) // Takes surfacetype as input and returns equi
 {
     switch (s) {
     case SURF_FAIRWAY: return ColorBrightness(GRASS_BASE,-0.22f); // brightness factor -1 to 1, when itbis minus, the color becomes darker
-    case SURF_SAND:    return SAND_BASE;
-    case SURF_ICE:     return ICE_BASE;
-    case SURF_MUD:     return MUD_BASE;
-    case SURF_WATER:   return WATER_BASE;
-    case SURF_BOOST:   return (Color){ 240, 200, 70, 255 };
-    default:           return GRASS_BASE;
+    case SURF_SAND: return SAND_BASE;
+    case SURF_ICE: return ICE_BASE;
+    case SURF_MUD: return MUD_BASE;
+    case SURF_WATER:return WATER_BASE;
+    case SURF_BOOST:return (Color){ 240, 200, 70, 255 };
+    default: return GRASS_BASE;
     }
 }
 
