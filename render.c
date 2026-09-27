@@ -94,12 +94,12 @@ Color SurfaceColor(SurfaceType s) // Takes surfacetype as input and returns equi
 {
     switch (s) {
     case SURF_FAIRWAY: return ColorBrightness(GRASS_BASE,-0.22f); // brightness factor -1 to 1, when itbis minus, the color becomes darker
-    case SURF_SAND:    return SAND_BASE;
-    case SURF_ICE:     return ICE_BASE;
-    case SURF_MUD:     return MUD_BASE;
-    case SURF_WATER:   return WATER_BASE;
-    case SURF_BOOST:   return (Color){ 240, 200, 70, 255 };
-    default:           return GRASS_BASE;
+    case SURF_SAND: return SAND_BASE;
+    case SURF_ICE: return ICE_BASE;
+    case SURF_MUD: return MUD_BASE;
+    case SURF_WATER:return WATER_BASE;
+    case SURF_BOOST:return (Color){ 240, 200, 70, 255 };
+    default: return GRASS_BASE;
     }
 }
 
@@ -265,6 +265,32 @@ void DrawPowerBar(float x,float y,float w,float h,float power) // Here power is 
 void DrawHUD(const Hole *h, const Ball *b, const Putter *p,int hole_index, int hole_count, int total)
 {
     int sw=GetScreenWidth(),sh=GetScreenHeight();
+
+    int currentTotal = total + b->strokes;
+
+    const char *scoreText = TextFormat("SCORE: %d",currentTotal);
+    int scoreFontSize = 32;
+    int scoreWidth = MeasureText(scoreText,scoreFontSize);
+
+    DrawRectangleRounded(
+        (Rectangle){
+            sw/2.0f - scoreWidth/2.0f - 20,
+            12,
+            scoreWidth + 40,
+            52
+        },
+        0.25f,
+        8,
+        Fade(BLACK,0.55f)
+    );
+
+    DrawText(
+        scoreText,
+        sw/2 - scoreWidth/2,
+        22,
+        scoreFontSize,
+        RAYWHITE
+    );
 
     DrawRectangleRounded((Rectangle){12,12,210,78},0.2,8,Fade(BLACK, 0.45));//Draw rectangle at the top of the bar to show game huds
     DrawText(TextFormat("HOLE %d / %d",h->number,hole_count),26,20,20,RAYWHITE); //TextFormat-Formatted string

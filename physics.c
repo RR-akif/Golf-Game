@@ -138,6 +138,8 @@ void CheckWallCollision(Ball *b, Hole *h)
 
                 b->vel.x -=(1.0+h->walls[i].bounce)* velocityAlongNormal * normal.x;  //for perfect elastic collision, when b->vel.x=10, and velocityalongnormal is -10, then simply this equation converts the velocity to -10 , it bounces off to the opposite direction with same velocity. That is exactly what we want. 
                 b->vel.y -=(1.0f + h->walls[i].bounce)* velocityAlongNormal * normal.y;
+
+                b->hitWall=true;
             }
         }
     }
