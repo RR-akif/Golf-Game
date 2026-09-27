@@ -4,7 +4,7 @@
 #include <math.h>
 
 
-#define aim_distance 40.0f
+#define aim_distance 40.0f /// minimum allowed
 
 #define right_click_time 0.25f
 #define right_click_distance 6.0f
@@ -48,19 +48,19 @@ InputState InputPoll(InputSystem *sys, Vector2 ball_pos, Camera2D cam, float dt)
 
     in.confirm = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 
-    if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
+    if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){ // cancelling
         sys->right_held_time = 0.0f;
         sys->right_drag_distance = 0.0f;
         sys->right_was_down = true;
     }
-    if(sys->right_was_down && IsMouseButtonDown(MOUSE_BUTTON_RIGHT)){
+    if(sys->right_was_down && IsMouseButtonDown(MOUSE_BUTTON_RIGHT)){ // to differentiate between a drag and cancel
         sys->right_held_time += dt;
         sys->right_drag_distance = Vector2Length(GetMouseDelta());
     }
 
-    if(sys->right_was_down && IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)){
+    if(sys->right_was_down && IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)){ 
         in.cancel = (sys->right_held_time < right_click_time && sys->right_drag_distance < right_click_distance);
-        sys->right_was_down = false;
+        sys->right_was_down = false;  // reseting the boolean
     }
     in.cam_zoom_delta = GetMouseWheelMove() * zoom_per_notch;
 

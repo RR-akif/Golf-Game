@@ -120,7 +120,7 @@ void StepPhysics(Ball *ball,Hole *hole,float dt) //Handling the rolling state of
     if(ball->state != BALL_ROLL) return;
 
     if(Vector2LengthSqr(ball->vel)<REST_SPEED*REST_SPEED)
-    BallComeToRest(ball);
+    BallComeToRest(ball); // manually ball ke thamaia dicchi, cause or velocity onek kom,.
 }
 
 

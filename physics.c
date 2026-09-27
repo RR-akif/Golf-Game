@@ -14,7 +14,7 @@ const float kfriction[SURF_COUNT]={
     [SURF_GREEN]=400.0,
     [SURF_FAIRWAY]=300.0,
     [SURF_SAND]=1400.00,
-    [SURF_ICE]=90.0,
+    [SURF_ICE]=75.0,
     [SURF_MUD]=2600.00,
     [SURF_WATER]=420.0,
     [SURF_BOOST]=-600.0, //boosts the velocity
@@ -38,6 +38,7 @@ SurfaceType SurfaceAt(Hole *hole,Vector2 p)
         if(CheckCollisionPointRec(p,hole->zones[i].area)) // checks whether the point p falls anywhere inside (or on the edge of)that rectangle
         {
             found=hole->zones[i].type; //storing the type of the surface
+            // we can also break here......... but thak, 
         }
     }
     return found;
@@ -151,7 +152,7 @@ int CheckCupCollision(Ball *b,Hole *h)
     float dx= b->pos.x - h->cup_pos.x;
     float dy= b->pos.y - h->cup_pos.y;
     float distance = sqrtf(dx*dx + dy*dy);
-    float capture_dist= h->cup_radius - b->radius;
+    float capture_dist= h->cup_radius - b->radius + 3; // ami + 3 dilam naile bug kaj kore
 
     if(capture_dist < 0.00)
     capture_dist= 0.00;

@@ -1,3 +1,2 @@
-red 55
-Rafin 57
+Rafin 55
 Akif 68

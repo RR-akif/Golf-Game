@@ -21,10 +21,10 @@ void AddZone(Hole *h, SurfaceType t, float x, float y, float w, float ht, Vector
 bool Validate_hole(Hole *h,const char *path){
     bool ok = true;
 
-    if(h->par < 1 || h->par > 9) h->par = 3;
+    if(h->par < 1 || h->par > 9) h->par = 3; // setting default 
     if(h->cup_radius < 4.0f) h->cup_radius = 14.0f;
     if(h->bounds.width < 100.0f || h->bounds.height < 100.0f) ok = false;
-    if(!CheckCollisionPointRec(h->tee_pos, h->bounds)) ok = false;
+    if(!CheckCollisionPointRec(h->tee_pos, h->bounds)) ok = false; // inside e thakte hobe
     if(!CheckCollisionPointRec(h->cup_pos, h->bounds)) ok = false;
     if(h-> wall_count == 0) ok = false; // im not sure about this one, need to check !!!!!!!
     return ok;
@@ -100,10 +100,10 @@ bool LoadHoleFromFile(Hole *h, const char *path){
 
     int line_no = 0;
     char *line = strtok(text, "\r\n");
-
+    // for loading whats in the text...
     while(line){
         line_no++;
-        Parseline(h,line,line_no,path);
+        Parseline(h,line,line_no,path); // line by line loadinggg....
         line = strtok(NULL, "\r\n");
     }
     UnloadFileText(text);
@@ -127,6 +127,8 @@ int course_load(Course *c, const char *dir){
 
     return c->hole_count;
 }
+
+// current course 1 barie dey
 
 bool course_advance(Course *c){
     if(c->current + 1 >= c->hole_count) return false;

@@ -14,7 +14,7 @@ void putter_init(Putter *p){
 }
 
 bool PutterIsCharging(const Putter *p){
-    return p->phase == putter_backswing;
+    return p->phase == putter_backswing; // backswing mane o charge hosseee......
 }
 
 float PutterPower(const Putter *p){

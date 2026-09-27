@@ -13,7 +13,7 @@
 #define MAX_PLAYERS 100
 #define MAX_NAME_LENGTH 30
 #define LEADERBOARD_FILE "leaderboard.txt" //For showing leaderboard including their name
-#define STROKE_LIMIT_OVER_PAR 5 //If this limit is crossed then automatic the game shifts to next level
+#define STROKE_LIMIT_OVER_PAR 4 //If this limit is crossed then automatic the game shifts to next level
 #define HOLE_DONE_PAUSE 1.60f //pause time when one hole is completed(show birdir , par or else....)
 
 typedef struct
@@ -158,7 +158,7 @@ void ToggleMute(GameApp *g) //This function will be called when sound button is 
     } 
     else {
         SetMusicVolume(g->menuMusic,0.6f);
-        SetMusicVolume(g->gameMusic,0.45f);
+        SetMusicVolume(g->gameMusic,0.1f);
     }
 }
 
@@ -615,6 +615,7 @@ int main(void)
         UpdateMusicStream(game.gameMusic);//This is applied per frame
 
         if (game.screen == SCREEN_MAIN_MENU) {
+            ShowCursor();
             BeginDrawing();
             ClearBackground(BLACK);
             shouldQuit=DrawMainMenu(&game); //Suppose user presses play , when this function is called then it checks which function is called, for "play" it returns true so game_screen brcomes screen_game , game.screen==screen_main_menu becomes false and this menu block is not executed
@@ -675,6 +676,10 @@ int main(void)
         switch (game.state) {
         case GS_PLAYING:
             // if(IsKeyPressed(KEY_N)) course_load(&game.course,"levels");
+            if(IsKeyPressed(KEY_N)){
+                course_advance(&game.course);
+                StartHole(&game);
+            }
             HideCursor();
             if (IsKeyPressed(KEY_R)) {
                 game.ball.pos = hole->tee_pos;
@@ -715,7 +720,7 @@ int main(void)
             }
 
             else if (game.ball.state == BALL_AIM && game.ball.strokes >= hole->par + STROKE_LIMIT_OVER_PAR) {
-                game.scores[game.course.current] = hole->par + STROKE_LIMIT_OVER_PAR;
+                game.scores[game.course.current] = hole->par + STROKE_LIMIT_OVER_PAR + 10;
                 game.hole_done_t = 0.0f;
                 game.state = GS_HOLE_DONE;
             }
