@@ -421,7 +421,7 @@ void GameInit(GameApp *g)
     g->cupSound = LoadSound("ballInCup.mp3");
     g->putterSound = LoadSound("BallStrike.mp3");
 
-    SetSoundVolume(g->waterSound,0.35f);
+    SetSoundVolume(g->waterSound,1.0f);
     SetSoundVolume(g->wallSound,1.0f);
     SetSoundVolume(g->cupSound,0.8f);
     SetSoundVolume(g->putterSound,1.00f);
