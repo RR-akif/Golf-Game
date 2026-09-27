@@ -14,7 +14,7 @@
 #define MAX_NAME_LENGTH 30
 #define LEADERBOARD_FILE "leaderboard.txt" //For showing leaderboard including their name
 #define STROKE_LIMIT_OVER_PAR 5 //If this limit is crossed then automatic the game shifts to next level
-#define HOLE_DONE_PAUSE 1.60f //pause time when one hole is completed(show birdir , par or else....)
+#define HOLE_DONE_PAUSE 1.60f //pause time when one hole is completed(show birdie , par or else....)
 
 typedef struct
 {
@@ -161,6 +161,7 @@ void ToggleMute(GameApp *g) //This function will be called when sound button is 
 
 #define BEST_SCORE_FILE "best_score.txt"
 
+
 int LoadBestScore(void)
 {
     FILE *file=fopen(BEST_SCORE_FILE,"r"); //this opens the file in read mode
@@ -203,7 +204,7 @@ void LoadLeaderboard(GameApp *g)
         int score;
         if(fscanf(file,"%29s %d",name,&score)!=2) //This function reads character name and his score and stores inside name , score
         {
-            break;
+            break; //It basically returns how many variables were successfully read
         }
         strcpy(g->leaderboard[g->leaderboardCount].name,name); //storing players name in the corresponding array
         g->leaderboard[g->leaderboardCount].score=score;
@@ -505,7 +506,7 @@ void DrawNameInputScreen(GameApp *g)
     DrawRectangleRounded(inputBox,0.15,10,BLACK);
     DrawRectangleRoundedLines(inputBox,0.15,10,RAYWHITE);
     DrawText(g->playerName,(int)inputBox.x+20,(int)inputBox.y+18,32,WHITE);
-    int key=GetCharPressed(); //did the user type any character?
+    int key=GetCharPressed(); // It returns the ascii value of the pressed character
 
     while(key>0)
     {
