@@ -53,6 +53,10 @@ typedef struct {
     Texture2D tutorialImage;
     Texture2D aboutImage;
     Texture2D windSprite;
+    Rectangle windFrameRec; //part of the wind sheet that is shown right now
+    int windCurrentFrame; //which frame of the wind sheet is shown
+    int windFramesCounter; //counts game frames, when it reaches 60/windFramesSpeed the next frame is shown
+    int windFramesSpeed; //how many sprite frames are shown per second
     Music menuMusic;
     Music gameMusic;
 
@@ -409,8 +413,12 @@ void GameInit(GameApp *g)
     g->menuBackground = LoadTexture("menu.png");
     g->tutorialImage = LoadTexture("tutorials.png");
     g->aboutImage = LoadTexture("Credits.png");
-    g->windSprite = LoadTexture("wind_sprite.png");
+    g->windSprite = LoadTexture("wind_sheet.png");
     SetTextureFilter(g->windSprite,TEXTURE_FILTER_BILINEAR);
+    g->windFrameRec = (Rectangle){0.0f,0.0f,(float)g->windSprite.width/WIND_FRAMES,(float)g->windSprite.height}; //first frame of the sheet
+    g->windCurrentFrame = 0;
+    g->windFramesCounter = 0;
+    g->windFramesSpeed = 10;
     g->menuMusic = LoadMusicStream("golfmenu.mp3");
     g->gameMusic = LoadMusicStream("gamemusic.mp3");
 
@@ -666,6 +674,7 @@ int main(void)
 
         switch (game.state) {
         case GS_PLAYING:
+            // if(IsKeyPressed(KEY_N)) course_load(&game.course,"levels");
             HideCursor();
             if (IsKeyPressed(KEY_R)) {
                 game.ball.pos = hole->tee_pos;
@@ -740,11 +749,22 @@ int main(void)
         }
 
         RenderUpdateCamera(&game.render,&game.ball,hole,&game.putter,dt);
+
+        //Wind sheet animation: move to the next frame every 60/windFramesSpeed game frames
+        game.windFramesCounter++;
+        if(game.windFramesCounter>=(60/game.windFramesSpeed))
+        {
+            game.windFramesCounter=0;
+            game.windCurrentFrame++;
+            if(game.windCurrentFrame>WIND_FRAMES-1) game.windCurrentFrame=0; //last frame reached, loop back to the first one
+            game.windFrameRec.x=(float)game.windCurrentFrame*game.windFrameRec.width;
+        }
+
         BeginDrawing();
         ClearBackground((Color){92,92,56,255});
         BeginMode2D(game.render.cam);
         DrawCourse(hole);
-        DrawWindZones(hole,game.windSprite,(float)GetTime());
+        DrawWindZones(hole,game.windSprite,game.windFrameRec,(float)GetTime());
         DrawBall(&game.ball);
         DrawRails(hole);
         if (game.state == GS_PLAYING && game.ball.state == BALL_AIM) DrawAimGuide(&game.ball,hole,in.aim_angle,game.putter.power);

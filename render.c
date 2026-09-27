@@ -145,15 +145,13 @@ void DrawCourse(const Hole *h)
 }
 
 //Drawing animated wind gusts inside every zone that has wind
-//The sprite sheet is one row of square frames, the gust drawn in each frame blows to the right
-void DrawWindZones(const Hole *h,Texture2D sprite,float t)
+//The sprite sheet is one row of WIND_FRAMES square frames, the wind drawn in each frame blows to the right
+//frameRec is the current frame, it is advanced in main.c using the frames counter
+void DrawWindZones(const Hole *h,Texture2D sprite,Rectangle frameRec,float t)
 {
     if(sprite.id==0) return; //texture failed to load, just skip the effect
 
-    int frames=sprite.width/sprite.height; //each frame is a square, so width/height gives the frame count
-    if(frames<2) return;
-    int used=frames-1; //the last frame is empty (the gust has faded out), skipping it avoids a blink
-    float fs=(float)sprite.height; //frame size in the texture
+    int currentFrame=(int)(frameRec.x/frameRec.width); //index of the frame that main.c selected
 
     for(int i=0;i<h->zone_count;i++)
     {
@@ -191,8 +189,9 @@ void DrawWindZones(const Hole *h,Texture2D sprite,float t)
                 float a=sinf(u*PI); //fade in at the start, fade out at the end
                 Vector2 pos=Vector2Add(c,Vector2Add(Vector2Scale(d,-travel*0.5+u*travel),Vector2Scale(p,off)));
 
-                int frame=((int)(t*10.0)+k*3+l*5)%used; //10 frames per second, each gust starts on a different frame
-                Rectangle src={frame*fs,0,fs,fs};
+                int frame=(currentFrame+k*3+l*5)%WIND_FRAMES; //each gust starts on a different frame, so they don't all look the same
+                Rectangle src=frameRec;
+                src.x=frame*frameRec.width;
                 Rectangle dst={pos.x,pos.y,size,size};
                 Rectangle shadow={pos.x+3,pos.y+4,size,size}; //dark copy slightly offset, so white gusts still show on ice
                 DrawTexturePro(sprite,src,shadow,(Vector2){size*0.5,size*0.5},angle,Fade((Color){20,50,70,255},0.45*a));

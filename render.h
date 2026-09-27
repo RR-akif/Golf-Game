@@ -1,6 +1,8 @@
 #ifndef RENDER_H
 #define RENDER_H
 
+#define WIND_FRAMES 8 //wind_sheet.png is 8 frames of 128x128 in one row
+
 #include "types.h"
 #include"level.h"
 #include"putter.h"
@@ -16,7 +18,7 @@ void RenderInit(RenderState *r, Vector2 ball_pos);
 void RenderUpdateCamera(RenderState *r, const Ball *b, const Hole *h,const Putter *p, float dt);
                         
 void DrawCourse(const Hole *h);
-void DrawWindZones(const Hole *h, Texture2D sprite, float t);
+void DrawWindZones(const Hole *h, Texture2D sprite, Rectangle frameRec, float t);
 void DrawBall(const Ball *b);
 void DrawRails(const Hole *h);
 void DrawAimGuide(const Ball *b, const Hole *h, float angle, float power);

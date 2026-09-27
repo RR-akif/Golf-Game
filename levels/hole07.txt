@@ -21,9 +21,9 @@ wall 1240 24 40 440 0.8
 # upward wind on the ice shelf, sand at the bottom of the drop
 zone 1 24 600 396 276 0 0
 zone 1 460 24 420 376 0 0
-zone 3 460 400 420 240 0 -140
+zone 3 460 400 420 240 0 600
 zone 1 460 640 420 236 0 0
 zone 1 920 24 320 336 0 0
 zone 2 920 600 320 276 0 0
-zone 1 1280 24 296 460 -90 0
+zone 1 1280 24 296 460 -300 0
 end
