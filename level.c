@@ -4,7 +4,7 @@
 #include <string.h>
 #include <raylib.h>
 #include <stdio.h>
-#include <math.h>
+
 
 
 
@@ -114,16 +114,6 @@ bool LoadHoleFromFile(Hole *h, const char *path){
 
 
 
-#define LEVEL_TEXT_MAX 16384
-// later
-bool SaveHoleToFile(const Hole *h, const char *path){
-    char buf[LEVEL_TEXT_MAX];
-    int n = 0;
-    /*  ei function pore likhbo, this one for editing option and stuffs for saving */
-    return false;
-}
-
-
 int course_load(Course *c, const char *dir){
     c->hole_count = 0;
     c->current = 0;
@@ -186,128 +176,4 @@ int course_to_par(const Course *c, const int *scores){
     }
 
     return diff;
-}
-
-// save file lekha lagbe ekhane.......
-
-
-
-// editor
-
-void EditorInit(Edtior *e){
-    e->tool = TOOL_WALL;
-    e->zone_type = SURF_SAND;
-    e->dragging = false;
-    e->grid_size = 10;
-    e->selected = -1;
-}
-
-Vector2 Snap2Grid(Vector2 p, int grid){
-    if(grid <= 1) return p;
-    return (Vector2){ roundf(p.x / grid) * grid, roundf(p.y / grid) * grid};
-}
-
-Rectangle RectFromCorners(Vector2 a, Vector2 b){
-    return (Rectangle){
-        fminf(a.x,b.x), fminf(a.y,b.y),fabsf(b.x - a.x),fabsf(b.y - a.y)
-    };
-}
-
-// its simply like removing a element from middle of an array and shifting the position
-void RemoveWall(Hole *h, int index){
-    if(index < 0 || index >= h->wall_count) return;
-    for(int i = index; i < h->wall_count - 1; i++){
-        h->walls[i] = h->walls[i + 1];
-    }
-    h->wall_count--;
-}
-
-int WallAtPoint(const Hole *h, Vector2 p){
-    for(int i = h->wall_count - 1; i >= 0; i--){
-        if(CheckCollisionPointRec(p, h->walls[i].rect)) return i;
-    }
-    return -1;
-}
-
-// for undoing things while the editor is open ... hell yeah , we are making our own map
-Hole UndoBuffer;
-bool UndoValid = false;
-
-void PushUndo(const Hole *h){
-    UndoBuffer = *h; 
-    UndoValid = true;
-}
-
-void PopUndo(Hole *h){
-    if(!UndoValid) return;
-    Hole temporary = *h;
-    *h = UndoBuffer;
-    UndoBuffer = temporary;
-}
-
-void editor_update(Edtior *e, Hole *h, const InputState *in){
-    Vector2 p = Snap2Grid(in->pointer_world, e->grid_size);
-    e->selected = WallAtPoint(h, in->pointer_world);
-
-
-    // for the tools
-    if(IsKeyPressed(KEY_ONE)) e->tool = TOOL_WALL;
-    if(IsKeyPressed(KEY_TWO)) e->tool = TOOL_ZONE;
-    if(IsKeyPressed(KEY_THREE)) e->tool = TOOL_TEE;
-    if(IsKeyPressed(KEY_FOUR)) e->tool = TOOL_CUP;
-    if(IsKeyPressed((KEY_FIVE))) e->tool = TOOL_DROP;
-
-    // cycle of zone_type baby
-
-    if(IsKeyPressed(KEY_TAB)){
-        e->zone_type = (SurfaceType)((e->zone_type + 1) % SURF_COUNT);
-    }
-
-    //// another cycle but with if else loop _ for grid sizing
-    if(IsKeyPressed(KEY_G)){
-        if(e->grid_size == 1) e->grid_size = 5;
-        else if(e->grid_size == 5) e->grid_size = 10;
-        else if(e->grid_size == 10) e->grid_size = 20;
-        else e->grid_size = 1;
-    }
-
-    // main edit starts here...
-    if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-        PushUndo(h);
-        e->dragging = true;
-        e->drag_start = p;
-    }
-    
-    if(e->dragging && IsMouseButtonReleased(MOUSE_BUTTON_LEFT)){
-        e->dragging = false;
-        Rectangle r = RectFromCorners(e->drag_start, p);
-
-        switch(e->tool){
-            case TOOL_TEE:
-                h->tee_pos = p; 
-                break;
-            case TOOL_CUP:
-                h->cup_pos = p;
-                break;
-            case TOOL_DROP:
-                if(r.width >= 4.0f && r.height >= 4.0f){
-                    h->drop_zone = r;
-                }
-                break;
-            case TOOL_WALL : 
-                if(r.width >= 4.0f && r.height >= 4.0f)
-                    AddWall(h,r.x,r.y,r.width,r.height,0.72f);
-                break;
-            case TOOL_ZONE:
-                if(r.width >= 4.0f && r.height >= 4.0f){
-                    AddZone(h,e->zone_type, r.x, r.y, r.width, r.height,Vector2Zero());
-                }
-                break;
-                
-        }
-
-    }
-    // forwhat
-
-
 }
