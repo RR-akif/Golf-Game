@@ -39,7 +39,6 @@ typedef struct {
     Ball ball;
     Putter putter;
     InputSystem input_sys;
-    Edtior editor;
     RenderState render;
     int scores[MAX_HOLES];
     int best[MAX_HOLES]; //best scores per hole individually
@@ -399,7 +398,6 @@ void GameInit(GameApp *g)
     SortLeaderboard(g);
 
     InputInit(&g->input_sys);
-    EditorInit(&g->editor);
 
     BallInit(&g->ball,course_current(&g->course)->tee_pos);
     putter_init(&g->putter);

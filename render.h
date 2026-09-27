@@ -24,7 +24,5 @@ void DrawHUD(const Hole *h, const Ball *b, const Putter *p,int hole_index, int h
              
 void DrawHoleBanner(const Hole *h, float t);
 void DrawScorecard(const Course *c, const int *scores);
-void DrawEditorOverlay(const Edtior *e, const Hole *h, Vector2 cursor);
-void DrawEditorHUD(const Edtior *e, const Hole *h);
 
 #endif

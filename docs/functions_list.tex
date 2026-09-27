@@ -1,0 +1,179 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parindent}{0pt}
+
+% Blank space for hand-written notes: \writespace{<number of lines>}
+\newcount\writelinecount
+\newcommand{\writespace}[1]{%
+  \par\vspace{0.3em}%
+  \writelinecount=0
+  \loop\ifnum\writelinecount<#1
+    \vspace{0.9em}\noindent\mbox{}\par
+    \advance\writelinecount by 1
+  \repeat
+  \vspace{0.8em}}
+
+% One entry per function: \fn{signature}
+\newcommand{\fn}[1]{%
+  \filbreak
+  {\raggedright\noindent\texttt{#1}\par}
+  \writespace{4}}
+
+% One entry per struct / enum: \st{name}{fields}
+\newcommand{\st}[2]{%
+  \filbreak
+  \noindent\textbf{\texttt{#1}}\par
+  \vspace{0.2em}{\raggedright\small\ttfamily #2\par}
+  \writespace{3}}
+
+\title{Mini-Golf: Structs and Functions}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-3em}
+\tableofcontents
+\newpage
+
+%==============================================================
+\section{Structs and Enums}
+%==============================================================
+
+\subsection{types.h}
+
+\st{enum SurfaceType}{SURF\_GREEN, SURF\_FAIRWAY, SURF\_SAND, SURF\_ICE, SURF\_MUD, SURF\_WATER, SURF\_BOOST, SURF\_COUNT}
+
+\st{enum BallState}{BALL\_AIM, BALL\_CHARGE, BALL\_ROLL, BALL\_SUNK, BALL\_OOB}
+
+\st{enum GameStateId}{GS\_MENU, GS\_PLAYING, GS\_HOLE\_DONE, GS\_SCOREBOARD, GS\_PAUSED}
+
+\st{struct Ball}{Vector2 pos; Vector2 vel; float radius; BallState state; int strokes; Vector2 last\_safe\_pos; bool hitWater; bool hitWall; bool hitCup; bool hitByPutter;}
+
+\st{struct Wall}{Rectangle rect; float bounce;}
+
+\st{struct Zone}{Rectangle area; SurfaceType type; Vector2 wind;}
+
+\st{struct Hole}{Wall walls[MAX\_WALLS]; int wall\_count; Zone zones[MAX\_ZONES]; int zone\_count; int number; int par; Vector2 tee\_pos; Vector2 cup\_pos; float cup\_radius; Rectangle bounds; Rectangle drop\_zone;}
+
+\st{struct Game}{GameStateId state; Camera2D camera; Ball ball; Hole hole; int hole\_index; int scores[MAX\_HOLES];}
+
+\subsection{input.h}
+
+\st{struct InputState}{Vector2 aim\_direction; float aim\_angle; Vector2 pointer\_world; bool pointer\_valid; bool charge\_pressed; bool charge\_held; bool charge\_released; bool cancel; bool confirm; bool cam\_zoom\_delta;}
+
+\st{struct InputSystem}{float aim\_angle; float right\_held\_time; float right\_drag\_distance; bool right\_was\_down;}
+
+\subsection{level.h}
+
+\st{struct Course}{Hole holes[MAX\_HOLES]; int hole\_count; int current;}
+
+\subsection{putter.h}
+
+\st{enum PutterPhase}{putter\_idle, putter\_backswing, putter\_strike, putter\_follow, putter\_recover}
+
+\st{struct Putter}{PutterPhase phase; float t; float power; float launch\_power; float aim\_angle; float offset; float dir; bool fired;}
+
+\subsection{render.h}
+
+\st{struct RenderState}{Camera2D cam; float hole\_time;}
+
+\subsection{main.c}
+
+\st{struct PlayerScore}{char name[MAX\_NAME\_LENGTH]; int score;}
+
+\st{enum ScreenState}{SCREEN\_MAIN\_MENU, SCREEN\_NAME\_INPUT, SCREEN\_GAME, SCREEN\_TUTORIAL, SCREEN\_LEADERBOARD, SCREEN\_ABOUT}
+
+\st{struct GameApp}{GameStateId state; Course course; Ball ball; Putter putter; InputSystem input\_sys; RenderState render; int scores[MAX\_HOLES]; int best[MAX\_HOLES]; int bestCourseScore; bool newBestScore; float hole\_done\_t; float prev\_speed; ScreenState screen; Texture2D menuBackground, tutorialImage, aboutImage, windSprite; Music menuMusic, gameMusic; Sound waterSound, wallSound, cupSound, putterSound; bool muted; char playerName[MAX\_NAME\_LENGTH]; int playerNameLength; PlayerScore leaderboard[MAX\_PLAYERS]; int leaderboardCount;}
+
+\newpage
+%==============================================================
+\section{Functions}
+%==============================================================
+
+\subsection{ball.c}
+\fn{void BallInit(Ball *ball, Vector2 tee\_pos)}
+\fn{float BallSpeed(Ball *ball)}
+\fn{bool BallAtRest(Ball *ball)}
+\fn{void BallLaunch(Ball *ball, Vector2 dir, float power)}
+\fn{void BallComeToRest(Ball *ball)}
+\fn{void CheckCup(Ball *ball, Hole *hole)}
+\fn{void CheckHazards(Ball *ball, Hole *hole)}
+\fn{void DropBall(Ball *ball, Hole *hole)}
+\fn{void StepPhysics(Ball *ball, Hole *hole, float dt)}
+\fn{void BallUpdate(Ball *ball, Hole *hole, float dt)}
+
+\subsection{physics.c}
+\fn{float FrictionOf(SurfaceType s)}
+\fn{SurfaceType SurfaceAt(Hole *hole, Vector2 p)}
+\fn{Vector2 WindAt(Hole *hole, Vector2 p)}
+\fn{void ApplyFriction(Ball *ball, float decel, float dt)}
+\fn{void ApplyWind(Ball *b, Vector2 wind, float dt)}
+\fn{void CheckWallCollision(Ball *b, Hole *h)}
+\fn{int CheckCupCollision(Ball *b, Hole *h)}
+
+\subsection{input.c}
+\fn{Vector2 DirFromAngle(float angle)}
+\fn{void InputInit(InputSystem *sys)}
+\fn{InputState InputPoll(InputSystem *sys, Vector2 ball\_pos, Camera2D cam, float dt)}
+
+\subsection{putter\_simple.c}
+\fn{void putter\_init(Putter *p)}
+\fn{bool PutterIsCharging(const Putter *p)}
+\fn{float PutterPower(const Putter *p)}
+\fn{void putter\_update(Putter *p, const InputState *in, Ball *ball, float dt)}
+\fn{void putter\_draw(const Putter *p, const Ball *ball)}
+
+\subsection{level.c}
+\fn{void AddZone(Hole *h, SurfaceType t, float x, float y, float w, float ht, Vector2 wind)}
+\fn{bool Validate\_hole(Hole *h, const char *path)}
+\fn{void Parseline(Hole *h, char *line, int line\_no, const char *path)}
+\fn{bool LoadHoleFromFile(Hole *h, const char *path)}
+\fn{int course\_load(Course *c, const char *dir)}
+\fn{bool course\_advance(Course *c)}
+\fn{Hole *course\_current(Course *c)}
+\fn{const char *score\_name(int strokes, int par)}
+\fn{int Course\_total(const int *scores, int hole\_count)}
+\fn{int course\_to\_par(const Course *c, const int *scores)}
+
+\subsection{render.c}
+\fn{void RenderInit(RenderState *r, Vector2 ballpos)}
+\fn{void RenderUpdateCamera(RenderState *r, const Ball *b, const Hole *h, const Putter *p, float dt)}
+\fn{void DrawCourse(const Hole *h)}
+\fn{void DrawWindZones(const Hole *h, Texture2D sprite, float t)}
+\fn{void DrawRail(Rectangle r)}
+\fn{void DrawRails(const Hole *h)}
+\fn{void DrawBall(const Ball *b)}
+\fn{void DrawAimGuide(const Ball *b, const Hole *h, float angle, float power)}
+\fn{void DrawHUD(const Hole *h, const Ball *b, const Putter *p, int hole\_index, int hole\_count, int total)}
+
+\subsection{main.c}
+\fn{void DrawFullscreenTexture(Texture2D texture)}
+\fn{bool DrawMenuButton(Rectangle rect, const char *text)}
+\fn{void StartHole(GameApp *g)}
+\fn{void StartGameMusic(GameApp *g)}
+\fn{void StartMenuMusic(GameApp *g)}
+\fn{int LoadBestScore(void)}
+\fn{void SaveBestScore(int score)}
+\fn{void LoadLeaderboard(GameApp *g)}
+\fn{void SaveLeaderboard(GameApp *g)}
+\fn{void SortLeaderboard(GameApp *g)}
+\fn{void UpdateLeaderboard(GameApp *g, int score)}
+\fn{void CheckFinalScore(GameApp *g)}
+\fn{void RestartGame(GameApp *g)}
+\fn{void ResetGameProgress(GameApp *g)}
+\fn{int DrawFinalScoreScreen(GameApp *g)}
+\fn{void GameInit(GameApp *g)}
+\fn{bool DrawMainMenu(GameApp *g)}
+\fn{void DrawTutorialScreen(GameApp *g)}
+\fn{void DrawAboutScreen(GameApp *g)}
+\fn{void DrawNameInputScreen(GameApp *g)}
+\fn{void DrawLeaderboardScreen(GameApp *g)}
+\fn{int main(void)}
+
+\end{document}

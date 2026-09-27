@@ -1,5 +1,4 @@
 #include"render.h"
-#include"physics.h"
 #include"raymath.h"
 #include<math.h>
 
@@ -306,6 +305,6 @@ void DrawHUD(const Hole *h, const Ball *b, const Putter *p,int hole_index, int h
     if (PutterIsCharging(p))
         DrawPowerBar(sw*0.5-130.0 , sh-54.0 , 260.0 , 22.0 , p->power); //draw the power bar while it is charging
 
-    DrawText("LMB hold to charge, release to hit  |  RMB cancel  |  F1 editor  |  R reset",20, sh - 26, 15, Fade(RAYWHITE, 0.6f));
+    DrawText("LMB hold to charge, release to hit  |  RMB cancel  |  R reset",20, sh - 26, 15, Fade(RAYWHITE, 0.6f));
 }
 
