@@ -246,6 +246,7 @@ int main(void)
         }
         switch (game.state) {
         case GS_PLAYING:
+            HideCursor();
             if (IsKeyPressed(KEY_R)) {
             game.ball.pos = hole->tee_pos;
             game.ball.vel = Vector2Zero();
