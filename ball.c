@@ -3,8 +3,6 @@
 #include "raymath.h"
 
 
-
-
 //Define
 #define MAX_LAUNCH_SPEED 1300.00
 #define REST_SPEED 12.00
