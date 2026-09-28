@@ -38,8 +38,8 @@ void RenderInit(RenderState *r,Vector2 ballpos)
 //The pupose is not to show the camera outside the golf course
 void ClampCamera(Camera2D *cam,Rectangle bounds) // bounds means the boundaries of the golf course inside which we want to enclose the camera
 {
-    float halfW=(GetScreenWidth()*0.5)/cam->zoom;// if width is 1200, then camera sees 640 pixel to the left and right of its target. Suppose if the target is at (1000,600) then cameras left position will be 1000-640, right will be 1000+640. But this creates a problem, left may become negative, that means camera will try to show outside the golf course
-    float halfH=(GetScreenHeight()*0.5)/cam->zoom; 
+    float halfW=(GetScreenWidth()*0.5);// if width is 1200, then camera sees 640 pixel to the left and right of its target. Suppose if the target is at (1000,600) then cameras left position will be 1000-640, right will be 1000+640. But this creates a problem, left may become negative, that means camera will try to show outside the golf course
+    float halfH=(GetScreenHeight()*0.5); //height width of the camera
                                                       // so min and max cases are needed  
                                                       //halfW- width of the camera
                                                       //halfH-Height of the camera
@@ -113,7 +113,6 @@ void DrawCourse(const Hole *h)
     for(int i=0;i<specks;i++)
     {
         DrawRectangle(((int)GetRandomValue(h->bounds.x , h->bounds.x+h->bounds.width)) , ((int)GetRandomValue(h->bounds.y , h->bounds.y+h->bounds.height)) ,2 ,2,dark);
-
     }
 
     //Draw surface zone
@@ -240,6 +239,7 @@ void DrawAimGuide(const Ball *b, const Hole *h, float angle, float power)
     float len=AIM_MAX_LEN*(0.35+0.65*power); //if power=1(max), then the len will be equal to max_len , this aim guide increases with the increment of power
     Color col=Fade(WHITE,0.55);
 
+
     for (float d=0.00;d<len;d+=21.0) //we are taking 21 pixels as one portion(generally 12 pixel dash + 9 pixel gap, again 12 pixel dash and 9 pixel gap)
     {
         DrawLineEx(       //draws a line mainly - (starting point,ending point, thickness,color)
@@ -263,25 +263,13 @@ void DrawPowerBar(float x,float y,float w,float h,float power) // Here power is 
 void DrawHUD(const Hole *h, const Ball *b, const Putter *p,int hole_index, int hole_count, int total)
 {
     int sw=GetScreenWidth(),sh=GetScreenHeight();
-
     int currentTotal = total + b->strokes;
 
     const char *scoreText = TextFormat("SCORE: %d",currentTotal);
     int scoreFontSize = 32;
     int scoreWidth = MeasureText(scoreText,scoreFontSize);
 
-    DrawRectangleRounded(
-        (Rectangle){
-            sw/2.0f - scoreWidth/2.0f - 20,
-            12,
-            scoreWidth + 40,
-            52
-        },
-        0.25f,
-        8,
-        Fade(BLACK,0.55f)
-    );
-
+    DrawRectangleRounded((Rectangle){sw/2.0f - scoreWidth/2.0f - 20, 12,scoreWidth + 40,52},0.25,8,Fade(BLACK,0.55f));
     DrawText(
         scoreText,
         sw/2 - scoreWidth/2,

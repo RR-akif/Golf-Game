@@ -13,7 +13,7 @@
 #define MAX_PLAYERS 100
 #define MAX_NAME_LENGTH 30
 #define LEADERBOARD_FILE "leaderboard.txt" //For showing leaderboard including their name
-#define STROKE_LIMIT_OVER_PAR 5 //If this limit is crossed then automatic the game shifts to next level
+#define STROKE_LIMIT_OVER_PAR 4//If this limit is crossed then automatic the game shifts to next level
 #define HOLE_DONE_PAUSE 1.60f //pause time when one hole is completed(show birdie , par or else....)
 
 typedef struct
@@ -676,6 +676,10 @@ int main(void)
         switch (game.state) {
         case GS_PLAYING:
             // if(IsKeyPressed(KEY_N)) course_load(&game.course,"levels");
+            if(IsKeyPressed(KEY_N)){
+                course_advance(&game.course);
+                StartHole(&game);
+            }
             HideCursor();
             if (IsKeyPressed(KEY_R)) {
                 game.ball.pos = hole->tee_pos;
@@ -716,7 +720,7 @@ int main(void)
             }
 
             else if (game.ball.state == BALL_AIM && game.ball.strokes >= hole->par + STROKE_LIMIT_OVER_PAR) {
-                game.scores[game.course.current] = hole->par + STROKE_LIMIT_OVER_PAR;
+                game.scores[game.course.current] = hole->par + STROKE_LIMIT_OVER_PAR + 10;
                 game.hole_done_t = 0.0f;
                 game.state = GS_HOLE_DONE;
             }
