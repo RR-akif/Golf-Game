@@ -5,7 +5,7 @@
 
 
 //Define
-#define MAX_BALL_SPEED 1400.00
+#define MAX_BALL_SPEED 1300.00
 #define CUP_CAPTURE_SPEED 250.00
 
 
@@ -48,7 +48,7 @@ SurfaceType SurfaceAt(Hole *hole,Vector2 p)
 //Adding wind at  zones
 Vector2 WindAt(Hole *hole, Vector2 p)
 {
-    Vector2 w={0.0 , 0.0};
+    Vector2 w={0.0,0.0};
     for(int i=0;i<hole->zone_count;i++)
     {
         if(CheckCollisionPointRec(p,hole->zones[i].area))
@@ -83,7 +83,7 @@ void ApplyWind(Ball *b,Vector2 wind,float dt)
 //Check collision with wall
 void CheckWallCollision(Ball *b, Hole *h)
 {
-    for (int i = 0; i < h->wall_count; i++)
+    for (int i=0;i<h->wall_count;i++)
     {
         Rectangle r=h->walls[i].rect;
 
@@ -97,14 +97,10 @@ void CheckWallCollision(Ball *b, Hole *h)
         if (distanceSquared<=b->radius*b->radius) // whether the distance is less than the radius of the ball
         {
             float distance = sqrtf(distanceSquared);
-
             Vector2 normal; //The direction perpendicular to the surface the the ball should be pushed away from
-            if (distance > 0.0)
+            if (distance>0.0)
             {
-                normal = (Vector2){ 
-                    dx / distance,
-                    dy / distance    // making "normal" a unit vector "unit normal"= it has only direction and length 1, so that at the time of the ball being bounced off, we can just alter the velocity direction along the "unit normal " vector.
-                };
+                normal=(Vector2){dx/distance,dy/distance};// making "normal" a unit vector "unit normal"= it has only direction and length 1, so that at the time of the ball being bounced off, we can just alter the velocity direction along the "unit normal " vector.     
             }
             else              // when distance is zero (ball is inside the rectangle) then dx/distance this would lead to 0/0.
             {
@@ -112,9 +108,9 @@ void CheckWallCollision(Ball *b, Hole *h)
                 float right=fabsf(b->pos.x - (r.x + r.width));
                 float top=fabsf(b->pos.y - r.y);
                 float bottom=fabsf(b->pos.y - (r.y + r.height)); //determining distances form each edge of the wall
-
-                float minDist=fminf(fminf(left, right),
-                                      fminf(top, bottom)); // Finding the distance of the ball from the nearest edge among four edges.
+                
+                float minDist=fminf(fminf(left, right),fminf(top, bottom));
+                                       // Finding the distance of the ball from the nearest edge among four edges.
 
                 if (minDist == left)
                     normal=(Vector2){-1.0, 0.0};  // As distance from the left edge is shortest , so we can assume that the ball entered the wall through the left side, and so it should be bounced off from the left edge.
@@ -128,7 +124,6 @@ void CheckWallCollision(Ball *b, Hole *h)
 
             b->pos.x=closestX+normal.x*b->radius; 
             b->pos.y=closestY+normal.y*b->radius; //push the ball along the direction of the normal , the center of balls coordinate should be minimum one radius away from the closest edge. Because for that case, the closest point of the ball is just at the touching state with the edge. 
-
             //Handle bouncing off with necessary velocity
 
             float velocityAlongNormal = b->vel.x*normal.x+b->vel.y*normal.y; //just we took the dot product.We know normal always acts at the outer direction of the wall. So,If velocity alongnormal is negative then it means ball is moving towards the opposite direction of the normal and moving into the wall. Positive means same direction and moving away ffrom the wall. If the ball is moving along the parallel line of the wall, the this will be zero.
@@ -139,7 +134,6 @@ void CheckWallCollision(Ball *b, Hole *h)
 
                 b->vel.x -=(1.0+h->walls[i].bounce)* velocityAlongNormal * normal.x;  //for perfect elastic collision, when b->vel.x=10, and velocityalongnormal is -10, then simply this equation converts the velocity to -10 , it bounces off to the opposite direction with same velocity. That is exactly what we want. 
                 b->vel.y -=(1.0f + h->walls[i].bounce)* velocityAlongNormal * normal.y;
-
                 b->hitWall=true;
             }
         }
@@ -149,8 +143,8 @@ void CheckWallCollision(Ball *b, Hole *h)
 //Check collision with circular hole
 int CheckCupCollision(Ball *b,Hole *h)
 {
-    float dx= b->pos.x - h->cup_pos.x;
-    float dy= b->pos.y - h->cup_pos.y;
+    float dx=b->pos.x-h->cup_pos.x;
+    float dy=b->pos.y-h->cup_pos.y;
     float distance = sqrtf(dx*dx + dy*dy);
     float capture_dist= h->cup_radius - b->radius + 3; // ami + 3 dilam naile bug kaj kore
 
